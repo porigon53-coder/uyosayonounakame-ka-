@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 
-// AdSense用の型宣言
 declare global {
   interface Window {
     adsbygoogle?: any[];
@@ -31,7 +30,6 @@ function ResultContent() {
 
   const historyCount = historyList.length;
 
-  // Google AdSense 読み込み初期化
   useEffect(() => {
     try {
       if (typeof window !== "undefined") {
@@ -42,7 +40,6 @@ function ResultContent() {
     }
   }, []);
 
-  // 全10種類の文字マスタ（「金」を追加）
   const wordMaster: { [key: string]: { text: string; color: string } } = {
     MONEY: { text: "金", color: "text-amber-500" },
     IT: { text: "IT", color: "text-indigo-900" },
@@ -56,7 +53,6 @@ function ResultContent() {
     SLEEP: { text: "眠", color: "text-teal-600" },
   };
 
-  // 履歴キーワード解析
   const scores: { [key: string]: number } = {
     MONEY: 0,
     IT: 0,
@@ -81,9 +77,8 @@ function ResultContent() {
       text.includes("株") ||
       text.includes("投資") ||
       text.includes("金")
-    ) {
+    )
       scores.MONEY += 3;
-    }
     if (
       text.includes("github") ||
       text.includes("qiita") ||
@@ -98,9 +93,8 @@ function ResultContent() {
       text.includes("stack") ||
       text.includes("tech") ||
       text.includes("code")
-    ) {
+    )
       scores.IT += 2;
-    }
     if (
       text.includes("news") ||
       text.includes("yahoo") ||
@@ -116,18 +110,16 @@ function ResultContent() {
       text.includes("選挙") ||
       text.includes("国会") ||
       text.includes("党")
-    ) {
+    )
       scores.POLITICS += 4;
-    }
     if (
       text.includes("youtube") ||
       text.includes("twitter") ||
       text.includes("x.com") ||
       text.includes("instagram") ||
       text.includes("game")
-    ) {
+    )
       scores.PLAY += 2;
-    }
     if (
       text.includes("wiki") ||
       text.includes("note") ||
@@ -144,20 +136,16 @@ function ResultContent() {
       text.includes("cookpad") ||
       text.includes("食") ||
       text.includes("店")
-    ) {
+    )
       scores.FOOD += 3;
-    }
     if (
       text.includes("hotel") ||
       text.includes("bed") ||
       text.includes("眠") ||
       text.includes("休")
-    ) {
+    )
       scores.SLEEP += 3;
-    }
-    if (text.length % 7 === 0) {
-      scores.SECRET += 1;
-    }
+    if (text.length % 7 === 0) scores.SECRET += 1;
   });
 
   const sortedKeys = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
@@ -165,7 +153,6 @@ function ResultContent() {
   const topWord1 = wordMaster[selectedKeys[0]] || wordMaster.MONEY;
   const topWord2 = wordMaster[selectedKeys[1]] || wordMaster.KNOWLEDGE;
 
-  // MBTI対立軸
   const isExtrovert = scores.PLAY + scores.POLITICS > scores.IT + scores.STUDY;
   const isSensing =
     scores.FOOD + scores.SLEEP + scores.MONEY > scores.TECH + scores.KNOWLEDGE;
@@ -207,35 +194,6 @@ function ResultContent() {
     titleSuffix = "政治思想論客』";
     descriptionText =
       "政治や社会ニュースの閲覧頻度が高く、世の中の動向を議論・検証したがる論客の頭脳です。物事を多角的に捉え、客観的データや事実に基づいて思考を展開します。";
-  } else if (
-    (top1 === "PLAY" && top2 === "SECRET") ||
-    (top1 === "SECRET" && top2 === "PLAY")
-  ) {
-    titleSuffix = "エンタメ散策家』";
-    descriptionText =
-      "動画やSNS、娯楽関連のサイトを積極的に閲覧しており、感性やトレンドを素早く察知する頭脳です。直感的な面白さや楽しいコンテンツを探索するモチベーションに溢れています。";
-  } else if (
-    (top1 === "STUDY" && top2 === "KNOWLEDGE") ||
-    (top1 === "KNOWLEDGE" && top2 === "STUDY")
-  ) {
-    titleSuffix = "知識収集コレクター』";
-    descriptionText =
-      "ドキュメントや解説サイトの参照が多く、新しい教養や知見を絶えず蓄積する探求脳です。深い洞察力で背景を学習し、自身のナレッジを広げることに喜びを感じます。";
-  } else if (
-    (top1 === "FOOD" && top2 === "SLEEP") ||
-    (top1 === "SLEEP" && top2 === "FOOD")
-  ) {
-    titleSuffix = "マイペース探求者』";
-    descriptionText =
-      "グルメや生活・休息に関連する検索履歴が多く、自身のQOLや快適さを重視するマイペース頭脳です。心身の充足や自然体のバランスを何よりも大切にしています。";
-  } else if (top1 === "POLITICS" || top2 === "STUDY") {
-    titleSuffix = "社会派アナリスト』";
-    descriptionText =
-      "社会問題や学術情報の閲覧が組み合わさっており、制度や構造の深い理解を目指す知的な頭脳です。現実の課題に対して客観的な根拠を持って分析を行う傾向があります。";
-  } else if (top1 === "TECH" || top2 === "PLAY") {
-    titleSuffix = "デジタルクリエイター』";
-    descriptionText =
-      "最新技術とエンタメ表現を組み合わせて情報収集するアイデア脳です。創造的なアウトプットや新しい表現技法に対し、常に高い関心とアンテナを張り巡らせています。";
   }
 
   const diagnosisTitle = `${titlePrefix}${titleSuffix}`;
@@ -253,14 +211,14 @@ function ResultContent() {
   const yDiff = techCount - newsCount;
   const yPos = Math.min(85, Math.max(-85, yDiff * 18));
 
-  // 幾何学レイアウト生成
+  // レイアウト設定
   const [layoutStyle, setLayoutStyle] = useState<number>(0);
   const [isBigH, setIsBigH] = useState<boolean>(false);
+  const [showTestMode, setShowTestMode] = useState<boolean>(false);
 
   useEffect(() => {
     const rollBigH = Math.random() < 0.2 || scores.SECRET > 3;
     setIsBigH(rollBigH);
-
     const styleRoll = Math.floor(Math.random() * 7);
     setLayoutStyle(styleRoll);
   }, []);
@@ -284,16 +242,16 @@ function ResultContent() {
     { top: "38%", left: "50%" },
   ];
 
-  const renderBrainWords = () => {
-    if (isBigH) {
+  // 単一スタイル描画ヘルパー
+  const renderPatternByStyle = (styleId: number, forceBigH = false) => {
+    if (forceBigH) {
       return (
         <span className="text-fuchsia-600 font-black text-9xl leading-none transform translate-x-2 -translate-y-2 opacity-95 drop-shadow-2xl animate-pulse">
           H
         </span>
       );
     }
-
-    if (layoutStyle === 0) {
+    if (styleId === 0) {
       return (
         <>
           {circlePositions.slice(0, 15).map((pos, idx) => (
@@ -314,8 +272,7 @@ function ResultContent() {
         </>
       );
     }
-
-    if (layoutStyle === 1) {
+    if (styleId === 1) {
       return circlePositions.slice(0, 15).map((pos, idx) => (
         <span
           key={idx}
@@ -326,8 +283,7 @@ function ResultContent() {
         </span>
       ));
     }
-
-    if (layoutStyle === 2) {
+    if (styleId === 2) {
       const topArc = [
         { top: "18%", left: "38%" },
         { top: "17%", left: "46%" },
@@ -358,8 +314,7 @@ function ResultContent() {
         </>
       );
     }
-
-    if (layoutStyle === 3) {
+    if (styleId === 3) {
       const bottomArc = [
         { top: "50%", left: "30%" },
         { top: "56%", left: "38%" },
@@ -388,8 +343,7 @@ function ResultContent() {
         </>
       );
     }
-
-    if (layoutStyle === 4) {
+    if (styleId === 4) {
       const leftPositions = [
         { top: "22%", left: "32%" },
         { top: "28%", left: "35%" },
@@ -431,8 +385,7 @@ function ResultContent() {
         </>
       );
     }
-
-    if (layoutStyle === 5) {
+    if (styleId === 5) {
       return (
         <>
           <span
@@ -450,7 +403,6 @@ function ResultContent() {
         </>
       );
     }
-
     return (
       <span
         className={`${topWord1.color} font-black text-8xl leading-none transform translate-x-1 -translate-y-2 opacity-90 drop-shadow-xl`}
@@ -460,7 +412,6 @@ function ResultContent() {
     );
   };
 
-  // おすすめ本2冊のデータ
   const recommendedBooks = [
     {
       id: 1,
@@ -484,18 +435,25 @@ function ResultContent() {
     },
   ];
 
-  // 𝕏 (Twitter) シェア実行関数
   const handleShare = () => {
     const shareText = `【ウハサハ脳中メーカー】\n私のWeb閲覧履歴の分析結果は ${diagnosisTitle} でした！\n革新・リベラル: ${liberalRatio}% / 伝統・保守: ${conservativeRatio}%\n\n#ウハサハ脳中メーカー #脳内メーカー\n`;
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
-
     window.open(twitterUrl, "_blank", "noopener,noreferrer");
   };
 
+  const styleNames = [
+    "円形輪郭 ＋ 中央1文字",
+    "円形交互配置",
+    "上半分円弧 ＋ 中央文字",
+    "下半分円弧 ＋ 上部文字",
+    "左右2分割配置",
+    "特大2文字対比",
+    "全体1文字巨大表示",
+  ];
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-800 p-6 flex flex-col items-center">
-      {/* 0. メインタイトル */}
       <header className="max-w-5xl w-full text-center mb-4">
         <div className="flex items-center justify-center gap-2 mb-1">
           <span className="text-3xl">🧠</span>
@@ -508,7 +466,6 @@ function ResultContent() {
         </p>
       </header>
 
-      {/* Google 広告エリア */}
       <div className="max-w-5xl w-full mb-6">
         <div className="bg-slate-100 rounded-xl border border-slate-200/80 p-2 text-center min-h-[90px] flex flex-col items-center justify-center overflow-hidden">
           <span className="text-[10px] text-slate-400 font-medium mb-1 block">
@@ -525,9 +482,7 @@ function ResultContent() {
         </div>
       </div>
 
-      {/* 4つの主要図（2列グリッド） */}
       <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* 左カラム：1. 診断結果カード ＆ 2. 脳内イメージ */}
         <div className="flex flex-col gap-6">
           <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 text-center">
             <span className="text-xs font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full">
@@ -553,13 +508,12 @@ function ResultContent() {
                 className="object-contain pointer-events-none"
               />
               <div className="absolute inset-0 select-none font-black flex items-center justify-center">
-                {renderBrainWords()}
+                {renderPatternByStyle(layoutStyle, isBigH)}
               </div>
             </div>
           </div>
         </div>
 
-        {/* 右カラム：3. メーター ＆ 4. 十字軸マップ */}
         <div className="flex flex-col gap-6">
           <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
             <h3 className="text-base font-bold text-slate-900 mb-3 border-b pb-2">
@@ -620,6 +574,68 @@ function ResultContent() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* テスト確認モード切替エリア */}
+      <div className="max-w-5xl w-full mb-6 text-center">
+        <button
+          onClick={() => setShowTestMode(!showTestMode)}
+          className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs px-4 py-2 rounded-xl border border-indigo-200 transition cursor-pointer"
+        >
+          {showTestMode
+            ? "▲ 全パターンプレビューを閉じる"
+            : "⚙️ 【テスト機能】全脳内イメージパターンを全種類表示する"}
+        </button>
+
+        {showTestMode && (
+          <div className="mt-4 bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm">
+            <h4 className="text-sm font-bold text-slate-900 mb-4">
+              🧪 全脳内パターン一覧（テスト用）
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {/* 超特大「H」 */}
+              <div className="flex flex-col items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <span className="text-[11px] font-bold text-indigo-600 mb-2">
+                  🔥 超特大「H」演出（20%確率）
+                </span>
+                <div className="relative w-40 h-40 flex items-center justify-center border rounded-lg bg-white overflow-hidden">
+                  <Image
+                    src="/head.png"
+                    alt="頭"
+                    fill
+                    className="object-contain pointer-events-none"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center font-black">
+                    {renderPatternByStyle(0, true)}
+                  </div>
+                </div>
+              </div>
+
+              {/* 7パターンの幾何学スタイル */}
+              {styleNames.map((name, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col items-center bg-slate-50 p-3 rounded-xl border border-slate-100"
+                >
+                  <span className="text-[11px] font-bold text-slate-700 mb-2">
+                    パターン{idx + 1}: {name}
+                  </span>
+                  <div className="relative w-40 h-40 flex items-center justify-center border rounded-lg bg-white overflow-hidden">
+                    <Image
+                      src="/head.png"
+                      alt="頭"
+                      fill
+                      className="object-contain pointer-events-none"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center font-black">
+                      {renderPatternByStyle(idx, false)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* おすすめ本 */}
@@ -685,7 +701,6 @@ function ResultContent() {
         </div>
       </div>
 
-      {/* 𝕏 シェアボタン */}
       <div className="max-w-5xl w-full text-center mb-6">
         <button
           onClick={handleShare}
@@ -695,7 +710,6 @@ function ResultContent() {
         </button>
       </div>
 
-      {/* 閲覧履歴一覧エリア */}
       <div className="max-w-5xl w-full">
         <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
           <h3 className="text-base font-bold text-slate-900 mb-3 border-b pb-2">
