@@ -1,20 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import questionsData from "./questions.json";
 
 export default function HomePage() {
+  const router = useRouter();
   const [showModal, setShowModal] = useState(true);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, "YES" | "NO">>({});
 
-  const [resultSource, setResultSource] = useState<"survey" | "upload">(
-    "survey",
-  );
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-
   const questions = questionsData || [];
 
+  // YES / NO 回答処理
   const handleAnswer = (answer: "YES" | "NO") => {
     const currentQ = questions[currentQIndex];
     if (!currentQ) return;
@@ -25,41 +23,72 @@ export default function HomePage() {
     if (currentQIndex + 1 < questions.length) {
       setCurrentQIndex(currentQIndex + 1);
     } else {
-      setShowModal(false);
+      // 5問回答完了 -> 結果ページへ自動遷移
+      navigateToResultWithSurvey(nextAnswers);
     }
   };
 
+  // スキップ処理
   const handleSkip = () => {
     setShowModal(false);
   };
 
+  // アンケート結果を診断用データに変換して結果ページへ
+  const navigateToResultWithSurvey = (
+    surveyAnswers: Record<number, "YES" | "NO">,
+  ) => {
+    const dummyData = questions.map((q) => ({
+      title: `${q.category}: ${q.text} -> ${surveyAnswers[q.id] || "未回答"}`,
+      domain:
+        surveyAnswers[q.id] === "YES" ? "news-liberal" : "news-conservative",
+    }));
+    const encoded = encodeURIComponent(JSON.stringify(dummyData));
+    router.push(`/result?data=${encoded}`);
+  };
+
+  // 履歴ファイルアップロード処理
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    setUploadedFileName(file.name);
-    setResultSource("upload");
 
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const text = event.target?.result as string;
-        alert(
-          `${file.name} を読み込みました。履歴データに基づいて再判定を行いました！`,
-        );
+        let parsedData = [];
+
+        if (file.name.endsWith(".json")) {
+          parsedData = JSON.parse(text);
+        } else {
+          // CSVの場合の解析
+          const lines = text.split("\n");
+          parsedData = lines.slice(1, 31).map((line) => {
+            const cols = line.split(",");
+            return {
+              title: cols[0] || "履歴データ",
+              domain: cols[1] || "uploaded-history",
+            };
+          });
+        }
+
+        const encoded = encodeURIComponent(JSON.stringify(parsedData));
+        router.push(`/result?data=${encoded}`);
       } catch (err) {
-        alert("ファイルの解析に失敗しました。");
+        alert(
+          "ファイルの読み込みに失敗しました。正しいJSON/CSV形式か確認してください。",
+        );
       }
     };
     reader.readAsText(file);
   };
 
   return (
-    <main className="min-h-screen bg-slate-900 text-slate-100 p-6 relative">
+    <main className="min-h-screen bg-slate-900 text-slate-100 p-6 relative flex flex-col items-center justify-center">
       {/* 1. YES/NO 5問モーダル */}
       {showModal && questions.length > 0 && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col items-center">
+            {/* プログレスバー */}
             <div className="w-full bg-slate-700 h-1.5 rounded-full mb-6 overflow-hidden">
               <div
                 className="bg-gradient-to-r from-pink-500 to-purple-500 h-full transition-all duration-300"
@@ -70,14 +99,14 @@ export default function HomePage() {
             </div>
 
             <span className="text-xs font-semibold text-purple-400 bg-purple-950/60 border border-purple-800 px-3 py-1 rounded-full mb-3">
-              {questions[currentQIndex].category} ({currentQIndex + 1}/
-              {questions.length})
+              今週の時事質問 ({currentQIndex + 1}/{questions.length})
             </span>
 
             <h2 className="text-lg font-bold text-center mb-8 min-h-[60px] flex items-center">
               {questions[currentQIndex].text}
             </h2>
 
+            {/* YES / NO ボタン */}
             <div className="grid grid-cols-2 gap-4 w-full mb-6">
               <button
                 onClick={() => handleAnswer("YES")}
@@ -93,6 +122,7 @@ export default function HomePage() {
               </button>
             </div>
 
+            {/* スキップボタン（下に小さくグレーで表示） */}
             <button
               onClick={handleSkip}
               className="text-xs text-slate-500 hover:text-slate-400 underline transition"
@@ -104,8 +134,8 @@ export default function HomePage() {
       )}
 
       {/* 2. メイン画面 */}
-      <div className="max-w-4xl mx-auto space-y-8">
-        <header className="text-center space-y-2">
+      <div className="max-w-xl w-full space-y-8 text-center">
+        <header className="space-y-2">
           <h1 className="text-3xl font-extrabold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
             ウヨサヨ脳中メーカー
           </h1>
@@ -115,17 +145,17 @@ export default function HomePage() {
         </header>
 
         {/* 履歴アップロードスペース */}
-        <section className="bg-slate-800 border border-slate-700 rounded-2xl p-6 text-center shadow-lg">
-          <h3 className="font-bold text-slate-200 mb-2">
-            閲覧履歴ファイルから精密再判定
+        <section className="bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center shadow-xl">
+          <h3 className="font-bold text-slate-200 text-lg mb-2">
+            📁 閲覧履歴ファイルから精密判定
           </h3>
-          <p className="text-xs text-slate-400 mb-4">
+          <p className="text-xs text-slate-400 mb-6 leading-relaxed">
             Chrome等の履歴データ（JSON /
-            CSV）をアップロードすると、実際の閲覧傾向からより詳細な分析を行います。
+            CSV）をアップロードすると、実際の閲覧傾向からあなたの脳内・政治スタンスを分析します。
           </p>
 
-          <label className="cursor-pointer inline-flex items-center gap-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-purple-300 font-semibold px-5 py-2.5 rounded-xl transition text-sm">
-            <span>📁 履歴ファイルをアップロード</span>
+          <label className="cursor-pointer inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold px-6 py-3.5 rounded-xl transition shadow-lg text-sm active:scale-95">
+            <span>ファイルを選択して診断する</span>
             <input
               type="file"
               accept=".json, .csv"
@@ -134,58 +164,23 @@ export default function HomePage() {
             />
           </label>
 
-          {uploadedFileName && (
-            <p className="text-xs text-emerald-400 mt-2">
-              適用中: {uploadedFileName} （履歴データ優先で表示中）
-            </p>
-          )}
+          <p className="text-[11px] text-slate-500 mt-4">
+            ※ファイル内のデータはブラウザ内でのみ解析され、外部サーバーに送信されることはありません。
+          </p>
         </section>
 
-        {/* 診断結果表示エリア */}
-        <section className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-6">
-          <div className="flex justify-between items-center border-b border-slate-700 pb-4">
-            <h2 className="font-bold text-lg text-purple-300">
-              現在の診断結果
-            </h2>
-            <span className="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-full">
-              判定ソース:{" "}
-              {resultSource === "survey" ? "5問アンケート" : "閲覧履歴ファイル"}
-            </span>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-              <h3 className="text-xs font-bold text-slate-400 mb-2">
-                脳内イメージ
-              </h3>
-              <div className="h-40 bg-slate-900/80 rounded-lg flex items-center justify-center text-slate-500 text-sm">
-                [ 脳内ビジュアルグラフィック ]
-              </div>
-            </div>
-
-            <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-4">
-              <h3 className="text-xs font-bold text-slate-400">
-                政治・思想的傾向メーター
-              </h3>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span>革新・リベラル</span>
-                  <span>伝統・保守</span>
-                </div>
-                <div className="w-full bg-slate-700 h-3 rounded-full overflow-hidden flex">
-                  <div
-                    className="bg-blue-500 h-full"
-                    style={{ width: "35%" }}
-                  />
-                  <div
-                    className="bg-orange-500 h-full"
-                    style={{ width: "65%" }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* 質問モーダルを再表示するボタン */}
+        {!showModal && (
+          <button
+            onClick={() => {
+              setCurrentQIndex(0);
+              setShowModal(true);
+            }}
+            className="text-xs text-purple-400 hover:text-purple-300 underline transition"
+          >
+            もう一度 5問アンケートに答える
+          </button>
+        )}
       </div>
     </main>
   );

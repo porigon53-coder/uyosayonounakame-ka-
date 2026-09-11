@@ -479,10 +479,11 @@ function ResultContent() {
                 className="bg-white rounded-xl p-4 border border-slate-100 flex gap-4 shadow-xs"
               >
                 <div className="relative w-20 h-28 flex-shrink-0 rounded bg-slate-100 overflow-hidden border border-slate-200 shadow-2xs">
-                  <img
+                  <Image
                     src={book.imageUrl}
                     alt={book.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 </div>
 
