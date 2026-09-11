@@ -149,7 +149,6 @@ function ResultContent() {
 
   const sortedKeys = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
   const selectedKeys = sortedKeys.slice(0, 4);
-  const activeWords = selectedKeys.map((key) => wordMaster[key]);
 
   // --- MBTI対立軸に基づく前半の判定（8パターン） ---
   const isExtrovert = scores.PLAY + scores.POLITICS > scores.IT + scores.STUDY; // 外向 vs 内向
@@ -263,40 +262,299 @@ function ResultContent() {
   );
   const conservativeRatio = 100 - liberalRatio;
 
-  // --- 【連動化】メーターと十字軸の完全連動計算 ---
-  // X軸：リベラル比率(50%が中央0)に応じて、右(保守:+px)・左(リベラル:-px)へ移動
+  // --- メーターと十字軸の完全連動計算 ---
   const xPos = Math.round(((conservativeRatio - 50) / 50) * 85);
-
-  // Y軸：理論派(テック) vs 社会派(ニュース)の差分に応じて上(理論派:+px)・下(社会派:-px)へ移動
   const yDiff = techCount - newsCount;
   const yPos = Math.min(85, Math.max(-85, yDiff * 18));
 
-  // 80%指定の均一配置レイアウト
-  const unifiedLayout = [
-    { top: "27%", left: "38%", word: activeWords[0] },
-    { top: "33%", left: "33%", word: activeWords[0] },
-    { top: "39%", left: "32%", word: activeWords[0] },
-    { top: "45%", left: "35%", word: activeWords[0] },
-    { top: "51%", left: "38%", word: activeWords[0] },
+  // --- 【全20パターン】スコア状況に応じた脳内文字配置パターンの動的割り当て ---
+  let layoutPatternIndex = 0;
+  if (top1 === "IT" && top2 === "TECH") layoutPatternIndex = 0;
+  else if (top1 === "POLITICS" && top2 === "KNOWLEDGE") layoutPatternIndex = 1;
+  else if (top1 === "PLAY" && top2 === "SECRET") layoutPatternIndex = 2;
+  else if (top1 === "FOOD" && top2 === "SLEEP") layoutPatternIndex = 3;
+  else if (top1 === "STUDY" && top2 === "KNOWLEDGE") layoutPatternIndex = 4;
+  else if (top1 === "IT" && top2 === "STUDY") layoutPatternIndex = 5;
+  else if (top1 === "PLAY" && top2 === "POLITICS") layoutPatternIndex = 6;
+  else if (top1 === "FOOD" && top2 === "KNOWLEDGE") layoutPatternIndex = 7;
+  else if (top1 === "TECH" && top2 === "PLAY") layoutPatternIndex = 8;
+  else if (top1 === "SECRET" && top2 === "FOOD") layoutPatternIndex = 9;
+  else if (top1 === "POLITICS" && top2 === "STUDY") layoutPatternIndex = 10;
+  else if (top1 === "SLEEP" && top2 === "IT") layoutPatternIndex = 11;
+  else if (top1 === "PLAY" && top2 === "KNOWLEDGE") layoutPatternIndex = 12;
+  else if (top1 === "SECRET" && top2 === "KNOWLEDGE") layoutPatternIndex = 13;
+  else if (top1 === "TECH" && top2 === "FOOD") layoutPatternIndex = 14;
+  else if (scores.IT > 5) layoutPatternIndex = 15;
+  else if (scores.POLITICS > 5) layoutPatternIndex = 16;
+  else if (scores.PLAY > 5) layoutPatternIndex = 17;
+  else if (scores.FOOD > 5) layoutPatternIndex = 18;
+  else layoutPatternIndex = 19; // デフォルト・バランス型
 
-    { top: "21%", left: "48%", word: activeWords[1] },
-    { top: "22%", left: "58%", word: activeWords[1] },
-    { top: "27%", left: "48%", word: activeWords[1] },
-    { top: "28%", left: "58%", word: activeWords[1] },
-    { top: "33%", left: "50%", word: activeWords[1] },
-
-    { top: "26%", left: "68%", word: activeWords[2] },
-    { top: "32%", left: "74%", word: activeWords[2] },
-    { top: "38%", left: "76%", word: activeWords[2] },
-    { top: "44%", left: "73%", word: activeWords[2] },
-    { top: "50%", left: "68%", word: activeWords[2] },
-
-    { top: "39%", left: "43%", word: activeWords[3] },
-    { top: "40%", left: "60%", word: activeWords[3] },
-    { top: "46%", left: "51%", word: activeWords[3] },
-    { top: "52%", left: "48%", word: activeWords[3] },
-    { top: "53%", left: "58%", word: activeWords[3] },
+  // 20種類の文字・座標定義テーブル
+  const patterns = [
+    // 1. IT・テックギーク型 (前頭葉・頭頂部にIT/技が集中)
+    [
+      { top: "22%", left: "42%", word: wordMaster.IT },
+      { top: "25%", left: "55%", word: wordMaster.TECH },
+      { top: "30%", left: "35%", word: wordMaster.IT },
+      { top: "32%", left: "62%", word: wordMaster.TECH },
+      { top: "38%", left: "45%", word: wordMaster.IT },
+      { top: "42%", left: "55%", word: wordMaster.KNOWLEDGE },
+      { top: "48%", left: "38%", word: wordMaster.STUDY },
+      { top: "52%", left: "60%", word: wordMaster.TECH },
+      { top: "58%", left: "48%", word: wordMaster.PLAY },
+      { top: "35%", left: "48%", word: wordMaster.IT },
+    ],
+    // 2. 政治論客型 (中央・前頭部に政治/知が大きく占有)
+    [
+      { top: "25%", left: "48%", word: wordMaster.POLITICS },
+      { top: "32%", left: "38%", word: wordMaster.POLITICS },
+      { top: "33%", left: "58%", word: wordMaster.KNOWLEDGE },
+      { top: "40%", left: "46%", word: wordMaster.POLITICS },
+      { top: "42%", left: "65%", word: wordMaster.STUDY },
+      { top: "48%", left: "35%", word: wordMaster.KNOWLEDGE },
+      { top: "50%", left: "52%", word: wordMaster.POLITICS },
+      { top: "56%", left: "42%", word: wordMaster.IT },
+      { top: "28%", left: "60%", word: wordMaster.KNOWLEDGE },
+      { top: "45%", left: "58%", word: wordMaster.POLITICS },
+    ],
+    // 3. エンタメ・遊興型 (脳全体に遊/Hが散乱)
+    [
+      { top: "22%", left: "38%", word: wordMaster.PLAY },
+      { top: "26%", left: "62%", word: wordMaster.SECRET },
+      { top: "32%", left: "48%", word: wordMaster.PLAY },
+      { top: "38%", left: "34%", word: wordMaster.SECRET },
+      { top: "40%", left: "58%", word: wordMaster.PLAY },
+      { top: "46%", left: "44%", word: wordMaster.FOOD },
+      { top: "52%", left: "65%", word: wordMaster.PLAY },
+      { top: "55%", left: "36%", word: wordMaster.PLAY },
+      { top: "28%", left: "50%", word: wordMaster.SECRET },
+      { top: "48%", left: "55%", word: wordMaster.PLAY },
+    ],
+    // 4. 欲望・本能優先型 (後頭部・下部に食/眠が集中)
+    [
+      { top: "35%", left: "40%", word: wordMaster.FOOD },
+      { top: "38%", left: "58%", word: wordMaster.SLEEP },
+      { top: "44%", left: "32%", word: wordMaster.FOOD },
+      { top: "45%", left: "50%", word: wordMaster.SLEEP },
+      { top: "48%", left: "65%", word: wordMaster.FOOD },
+      { top: "53%", left: "42%", word: wordMaster.SLEEP },
+      { top: "56%", left: "55%", word: wordMaster.FOOD },
+      { top: "28%", left: "48%", word: wordMaster.PLAY },
+      { top: "32%", left: "60%", word: wordMaster.FOOD },
+      { top: "50%", left: "48%", word: wordMaster.SLEEP },
+    ],
+    // 5. 学究・コレクター型 (学/知が密に詰まった構造)
+    [
+      { top: "22%", left: "45%", word: wordMaster.STUDY },
+      { top: "28%", left: "35%", word: wordMaster.KNOWLEDGE },
+      { top: "29%", left: "56%", word: wordMaster.STUDY },
+      { top: "35%", left: "44%", word: wordMaster.KNOWLEDGE },
+      { top: "38%", left: "64%", word: wordMaster.STUDY },
+      { top: "44%", left: "36%", word: wordMaster.STUDY },
+      { top: "46%", left: "52%", word: wordMaster.KNOWLEDGE },
+      { top: "52%", left: "42%", word: wordMaster.IT },
+      { top: "54%", left: "58%", word: wordMaster.STUDY },
+      { top: "40%", left: "50%", word: wordMaster.KNOWLEDGE },
+    ],
+    // 6. 論理アーキテクト型 (IT/学が上下に規則正しく並ぶ)
+    [
+      { top: "20%", left: "48%", word: wordMaster.IT },
+      { top: "27%", left: "40%", word: wordMaster.STUDY },
+      { top: "28%", left: "58%", word: wordMaster.IT },
+      { top: "35%", left: "48%", word: wordMaster.TECH },
+      { top: "42%", left: "38%", word: wordMaster.IT },
+      { top: "43%", left: "60%", word: wordMaster.STUDY },
+      { top: "50%", left: "48%", word: wordMaster.IT },
+      { top: "55%", left: "38%", word: wordMaster.KNOWLEDGE },
+      { top: "56%", left: "58%", word: wordMaster.STUDY },
+      { top: "36%", left: "36%", word: wordMaster.IT },
+    ],
+    // 7. アクティブ発言派 (遊/政治が前頭部を左右に挟む)
+    [
+      { top: "24%", left: "36%", word: wordMaster.PLAY },
+      { top: "25%", left: "58%", word: wordMaster.POLITICS },
+      { top: "32%", left: "46%", word: wordMaster.PLAY },
+      { top: "38%", left: "34%", word: wordMaster.POLITICS },
+      { top: "40%", left: "60%", word: wordMaster.PLAY },
+      { top: "46%", left: "48%", word: wordMaster.POLITICS },
+      { top: "52%", left: "38%", word: wordMaster.KNOWLEDGE },
+      { top: "54%", left: "58%", word: wordMaster.PLAY },
+      { top: "30%", left: "48%", word: wordMaster.POLITICS },
+      { top: "44%", left: "38%", word: wordMaster.PLAY },
+    ],
+    // 8. 生活美学型 (知/食が優しく散在)
+    [
+      { top: "25%", left: "42%", word: wordMaster.FOOD },
+      { top: "28%", left: "56%", word: wordMaster.KNOWLEDGE },
+      { top: "34%", left: "36%", word: wordMaster.KNOWLEDGE },
+      { top: "36%", left: "48%", word: wordMaster.FOOD },
+      { top: "42%", left: "62%", word: wordMaster.SLEEP },
+      { top: "46%", left: "40%", word: wordMaster.FOOD },
+      { top: "50%", left: "54%", word: wordMaster.KNOWLEDGE },
+      { top: "55%", left: "45%", word: wordMaster.FOOD },
+      { top: "30%", left: "48%", word: wordMaster.KNOWLEDGE },
+      { top: "40%", left: "52%", word: wordMaster.FOOD },
+    ],
+    // 9. クリエイター型 (技/遊がランダムに飛び交う)
+    [
+      { top: "21%", left: "40%", word: wordMaster.TECH },
+      { top: "26%", left: "60%", word: wordMaster.PLAY },
+      { top: "31%", left: "48%", word: wordMaster.TECH },
+      { top: "36%", left: "35%", word: wordMaster.PLAY },
+      { top: "39%", left: "58%", word: wordMaster.TECH },
+      { top: "45%", left: "44%", word: wordMaster.IT },
+      { top: "50%", left: "62%", word: wordMaster.PLAY },
+      { top: "54%", left: "38%", word: wordMaster.TECH },
+      { top: "28%", left: "50%", word: wordMaster.PLAY },
+      { top: "43%", left: "52%", word: wordMaster.TECH },
+    ],
+    // 10. ナイトライフ型 (H/食が深層部に集中)
+    [
+      { top: "28%", left: "48%", word: wordMaster.SECRET },
+      { top: "34%", left: "38%", word: wordMaster.FOOD },
+      { top: "36%", left: "58%", word: wordMaster.SECRET },
+      { top: "42%", left: "46%", word: wordMaster.SECRET },
+      { top: "45%", left: "64%", word: wordMaster.FOOD },
+      { top: "50%", left: "36%", word: wordMaster.SECRET },
+      { top: "52%", left: "52%", word: wordMaster.PLAY },
+      { top: "56%", left: "42%", word: wordMaster.FOOD },
+      { top: "24%", left: "42%", word: wordMaster.SECRET },
+      { top: "40%", left: "54%", word: wordMaster.SECRET },
+    ],
+    // 11. 社会派アナリスト (政治/学が中心に密着)
+    [
+      { top: "22%", left: "46%", word: wordMaster.POLITICS },
+      { top: "28%", left: "38%", word: wordMaster.STUDY },
+      { top: "30%", left: "58%", word: wordMaster.POLITICS },
+      { top: "36%", left: "48%", word: wordMaster.KNOWLEDGE },
+      { top: "42%", left: "36%", word: wordMaster.POLITICS },
+      { top: "44%", left: "58%", word: wordMaster.STUDY },
+      { top: "50%", left: "46%", word: wordMaster.POLITICS },
+      { top: "54%", left: "56%", word: wordMaster.KNOWLEDGE },
+      { top: "26%", left: "52%", word: wordMaster.STUDY },
+      { top: "38%", left: "40%", word: wordMaster.POLITICS },
+    ],
+    // 12. スマート効率型 (IT/眠が左右に対比)
+    [
+      { top: "23%", left: "38%", word: wordMaster.IT },
+      { top: "26%", left: "58%", word: wordMaster.SLEEP },
+      { top: "32%", left: "48%", word: wordMaster.IT },
+      { top: "37%", left: "36%", word: wordMaster.SLEEP },
+      { top: "40%", left: "60%", word: wordMaster.IT },
+      { top: "46%", left: "44%", word: wordMaster.TECH },
+      { top: "51%", left: "62%", word: wordMaster.SLEEP },
+      { top: "55%", left: "38%", word: wordMaster.IT },
+      { top: "29%", left: "48%", word: wordMaster.SLEEP },
+      { top: "43%", left: "52%", word: wordMaster.IT },
+    ],
+    // 13. トレンド情報感度型 (知/遊が均等分散)
+    [
+      { top: "22%", left: "44%", word: wordMaster.PLAY },
+      { top: "27%", left: "56%", word: wordMaster.KNOWLEDGE },
+      { top: "32%", left: "36%", word: wordMaster.PLAY },
+      { top: "35%", left: "48%", word: wordMaster.KNOWLEDGE },
+      { top: "41%", left: "62%", word: wordMaster.PLAY },
+      { top: "45%", left: "40%", word: wordMaster.KNOWLEDGE },
+      { top: "50%", left: "52%", word: wordMaster.PLAY },
+      { top: "54%", left: "42%", word: wordMaster.KNOWLEDGE },
+      { top: "28%", left: "40%", word: wordMaster.KNOWLEDGE },
+      { top: "38%", left: "54%", word: wordMaster.PLAY },
+    ],
+    // 14. マニアック探求型 (H/知が深部にひっそり配置)
+    [
+      { top: "26%", left: "42%", word: wordMaster.SECRET },
+      { top: "30%", left: "55%", word: wordMaster.KNOWLEDGE },
+      { top: "35%", left: "36%", word: wordMaster.SECRET },
+      { top: "38%", left: "48%", word: wordMaster.SECRET },
+      { top: "43%", left: "60%", word: wordMaster.KNOWLEDGE },
+      { top: "48%", left: "40%", word: wordMaster.SECRET },
+      { top: "52%", left: "52%", word: wordMaster.SECRET },
+      { top: "56%", left: "44%", word: wordMaster.STUDY },
+      { top: "22%", left: "48%", word: wordMaster.KNOWLEDGE },
+      { top: "40%", left: "54%", word: wordMaster.SECRET },
+    ],
+    // 15. マルチライフ派 (技/食が広く配置)
+    [
+      { top: "22%", left: "42%", word: wordMaster.TECH },
+      { top: "27%", left: "58%", word: wordMaster.FOOD },
+      { top: "32%", left: "36%", word: wordMaster.FOOD },
+      { top: "36%", left: "48%", word: wordMaster.TECH },
+      { top: "41%", left: "60%", word: wordMaster.FOOD },
+      { top: "46%", left: "40%", word: wordMaster.TECH },
+      { top: "50%", left: "54%", word: wordMaster.SLEEP },
+      { top: "54%", left: "44%", word: wordMaster.FOOD },
+      { top: "28%", left: "48%", word: wordMaster.TECH },
+      { top: "40%", left: "52%", word: wordMaster.FOOD },
+    ],
+    // 16. IT単体突出型
+    [
+      { top: "20%", left: "45%", word: wordMaster.IT },
+      { top: "26%", left: "35%", word: wordMaster.IT },
+      { top: "28%", left: "58%", word: wordMaster.IT },
+      { top: "34%", left: "46%", word: wordMaster.TECH },
+      { top: "40%", left: "38%", word: wordMaster.IT },
+      { top: "42%", left: "60%", word: wordMaster.IT },
+      { top: "48%", left: "48%", word: wordMaster.IT },
+      { top: "53%", left: "38%", word: wordMaster.STUDY },
+      { top: "55%", left: "56%", word: wordMaster.IT },
+      { top: "36%", left: "54%", word: wordMaster.IT },
+    ],
+    // 17. 政治単体突出型
+    [
+      { top: "22%", left: "48%", word: wordMaster.POLITICS },
+      { top: "28%", left: "38%", word: wordMaster.POLITICS },
+      { top: "30%", left: "58%", word: wordMaster.POLITICS },
+      { top: "36%", left: "46%", word: wordMaster.POLITICS },
+      { top: "42%", left: "35%", word: wordMaster.POLITICS },
+      { top: "44%", left: "60%", word: wordMaster.KNOWLEDGE },
+      { top: "50%", left: "48%", word: wordMaster.POLITICS },
+      { top: "54%", left: "38%", word: wordMaster.POLITICS },
+      { top: "56%", left: "58%", word: wordMaster.POLITICS },
+      { top: "38%", left: "52%", word: wordMaster.POLITICS },
+    ],
+    // 18. 遊興単体突出型
+    [
+      { top: "21%", left: "40%", word: wordMaster.PLAY },
+      { top: "25%", left: "58%", word: wordMaster.PLAY },
+      { top: "30%", left: "48%", word: wordMaster.PLAY },
+      { top: "36%", left: "36%", word: wordMaster.PLAY },
+      { top: "38%", left: "60%", word: wordMaster.PLAY },
+      { top: "44%", left: "44%", word: wordMaster.PLAY },
+      { top: "50%", left: "62%", word: wordMaster.SECRET },
+      { top: "53%", left: "38%", word: wordMaster.PLAY },
+      { top: "28%", left: "50%", word: wordMaster.PLAY },
+      { top: "42%", left: "52%", word: wordMaster.PLAY },
+    ],
+    // 19. 食・生活単体突出型
+    [
+      { top: "24%", left: "42%", word: wordMaster.FOOD },
+      { top: "28%", left: "56%", word: wordMaster.FOOD },
+      { top: "33%", left: "36%", word: wordMaster.FOOD },
+      { top: "36%", left: "48%", word: wordMaster.FOOD },
+      { top: "41%", left: "62%", word: wordMaster.SLEEP },
+      { top: "46%", left: "40%", word: wordMaster.FOOD },
+      { top: "50%", left: "54%", word: wordMaster.FOOD },
+      { top: "54%", left: "44%", word: wordMaster.FOOD },
+      { top: "30%", left: "48%", word: wordMaster.FOOD },
+      { top: "40%", left: "52%", word: wordMaster.FOOD },
+    ],
+    // 20. デフォルト・完全バランス型 (全種が均等に散在)
+    [
+      { top: "21%", left: "48%", word: wordMaster.IT },
+      { top: "26%", left: "38%", word: wordMaster.KNOWLEDGE },
+      { top: "28%", left: "58%", word: wordMaster.PLAY },
+      { top: "34%", left: "46%", word: wordMaster.TECH },
+      { top: "39%", left: "35%", word: wordMaster.POLITICS },
+      { top: "41%", left: "60%", word: wordMaster.STUDY },
+      { top: "47%", left: "48%", word: wordMaster.FOOD },
+      { top: "52%", left: "38%", word: wordMaster.SLEEP },
+      { top: "54%", left: "56%", word: wordMaster.SECRET },
+      { top: "36%", left: "52%", word: wordMaster.IT },
+    ],
   ];
+
+  const activeLayout = patterns[layoutPatternIndex];
 
   // おすすめ本2冊のデータ
   const recommendedBooks = [
@@ -324,7 +582,7 @@ function ResultContent() {
 
   // 𝕏 (Twitter) シェア実行関数
   const handleShare = () => {
-    const shareText = `【うはさは脳中メーカー】\n私のWeb閲覧履歴の分析結果は ${diagnosisTitle} でした！\n革新・リベラル: ${liberalRatio}% / 伝統・保守: ${conservativeRatio}%\n\n#うはさは脳中メーカー #脳内メーカー\n`;
+    const shareText = `【ウハサハ脳中メーカー】\n私のWeb閲覧履歴の分析結果は ${diagnosisTitle} でした！\n革新・リベラル: ${liberalRatio}% / 伝統・保守: ${conservativeRatio}%\n\n#ウハサハ脳中メーカー #脳内メーカー\n`;
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
 
@@ -338,7 +596,7 @@ function ResultContent() {
         <div className="flex items-center justify-center gap-2 mb-1">
           <span className="text-3xl">🧠</span>
           <h1 className="font-extrabold text-slate-900 text-2xl md:text-3xl tracking-tight">
-            うはさは脳中メーカー
+            ウハサハ脳中メーカー
           </h1>
         </div>
         <p className="text-xs md:text-sm text-slate-500 font-medium">
@@ -392,7 +650,7 @@ function ResultContent() {
                 className="object-contain pointer-events-none"
               />
               <div className="absolute inset-0 select-none font-black">
-                {unifiedLayout.map((pos, idx) => (
+                {activeLayout.map((pos, idx) => (
                   <span
                     key={idx}
                     className={`absolute ${pos.word.color} text-base leading-none transform -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-150`}
@@ -443,7 +701,7 @@ function ResultContent() {
               <div className="absolute w-full h-0.5 bg-slate-300"></div>
               <div className="absolute h-full w-0.5 bg-slate-300"></div>
 
-              {/* 上下左右ラベル（修正箇所） */}
+              {/* 上下左右軸ラベル */}
               <span className="absolute top-1.5 text-[10px] font-bold text-slate-500 bg-slate-50 px-1">
                 理論派
               </span>
