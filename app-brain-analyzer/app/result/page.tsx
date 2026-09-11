@@ -256,16 +256,20 @@ function ResultContent() {
   const newsCount = scores.KNOWLEDGE + scores.POLITICS;
   const techCount = scores.IT + scores.TECH;
 
+  // メーターの比率算出 (リベラル % / 保守 %)
   const liberalRatio = Math.min(
     85,
     Math.max(15, Math.round(50 + (newsCount - techCount) * 5)),
   );
   const conservativeRatio = 100 - liberalRatio;
 
-  // よりダイナミックに位置が変化する計算式（幅を±90pxに拡大）
-  const diff = newsCount - techCount;
-  const xPos = Math.min(90, Math.max(-90, diff * 18));
-  const yPos = Math.min(90, Math.max(-90, -diff * 18));
+  // --- 【連動化】メーターと十字軸の完全連動計算 ---
+  // X軸：リベラル比率(50%が中央0)に応じて、右(保守:+px)・左(リベラル:-px)へ移動
+  const xPos = Math.round(((conservativeRatio - 50) / 50) * 85);
+
+  // Y軸：理論派(テック) vs 社会派(ニュース)の差分に応じて上(理論派:+px)・下(社会派:-px)へ移動
+  const yDiff = techCount - newsCount;
+  const yPos = Math.min(85, Math.max(-85, yDiff * 18));
 
   // 80%指定の均一配置レイアウト
   const unifiedLayout = [
@@ -320,7 +324,7 @@ function ResultContent() {
 
   // 𝕏 (Twitter) シェア実行関数
   const handleShare = () => {
-    const shareText = `【ウヨサヨ脳中メーカー】\n私のWeb閲覧履歴の分析結果は ${diagnosisTitle} でした！\n革新・リベラル: ${liberalRatio}% / 伝統・保守: ${conservativeRatio}%\n\n#ウヨサヨ脳中メーカー #脳内メーカー\n`;
+    const shareText = `【うはさは脳中メーカー】\n私のWeb閲覧履歴の分析結果は ${diagnosisTitle} でした！\n革新・リベラル: ${liberalRatio}% / 伝統・保守: ${conservativeRatio}%\n\n#うはさは脳中メーカー #脳内メーカー\n`;
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
 
@@ -334,7 +338,7 @@ function ResultContent() {
         <div className="flex items-center justify-center gap-2 mb-1">
           <span className="text-3xl">🧠</span>
           <h1 className="font-extrabold text-slate-900 text-2xl md:text-3xl tracking-tight">
-            ウヨサヨ脳中メーカー
+            うはさは脳中メーカー
           </h1>
         </div>
         <p className="text-xs md:text-sm text-slate-500 font-medium">
@@ -432,18 +436,19 @@ function ResultContent() {
 
           <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex flex-col items-center flex-1 justify-center">
             <h3 className="text-base font-bold text-slate-900 mb-2 w-full border-b pb-2 text-center">
-              🧭 政治・思考スタンスマップ（十字軸）
+              🧭 政治・思考スタンスマップ
             </h3>
 
             <div className="relative w-60 h-60 border-2 border-slate-200 bg-slate-50 rounded-xl mt-2 flex items-center justify-center">
               <div className="absolute w-full h-0.5 bg-slate-300"></div>
               <div className="absolute h-full w-0.5 bg-slate-300"></div>
 
+              {/* 上下左右ラベル（修正箇所） */}
               <span className="absolute top-1.5 text-[10px] font-bold text-slate-500 bg-slate-50 px-1">
-                テック・理論派
+                理論派
               </span>
               <span className="absolute bottom-1.5 text-[10px] font-bold text-slate-500 bg-slate-50 px-1">
-                ニュース・社会派
+                社会派
               </span>
               <span className="absolute left-1.5 text-[10px] font-bold text-cyan-600 bg-slate-50 px-1">
                 革新・リベラル
