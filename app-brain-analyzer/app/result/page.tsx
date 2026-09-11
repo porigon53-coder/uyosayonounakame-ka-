@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 
 // AdSense用の型宣言
@@ -151,10 +151,10 @@ function ResultContent() {
   const selectedKeys = sortedKeys.slice(0, 4);
 
   // --- MBTI対立軸に基づく前半の判定（8パターン） ---
-  const isExtrovert = scores.PLAY + scores.POLITICS > scores.IT + scores.STUDY; // 外向 vs 内向
-  const isSensing = scores.FOOD + scores.SLEEP > scores.TECH + scores.KNOWLEDGE; // 感覚 vs 直観
-  const isThinking = scores.IT + scores.POLITICS > scores.PLAY + scores.SECRET; // 思考 vs 感情
-  const isJudging = scores.STUDY + scores.KNOWLEDGE > scores.PLAY + scores.FOOD; // 判断 vs 知覚
+  const isExtrovert = scores.PLAY + scores.POLITICS > scores.IT + scores.STUDY;
+  const isSensing = scores.FOOD + scores.SLEEP > scores.TECH + scores.KNOWLEDGE;
+  const isThinking = scores.IT + scores.POLITICS > scores.PLAY + scores.SECRET;
+  const isJudging = scores.STUDY + scores.KNOWLEDGE > scores.PLAY + scores.FOOD;
 
   let titlePrefix = "🧠 『内向的・直観型の";
   if (isExtrovert && isThinking) titlePrefix = "🗣️ 『外向的・思考型の";
@@ -165,7 +165,6 @@ function ResultContent() {
   else if (isSensing && !isJudging) titlePrefix = "🍃 『感覚的・知覚型の";
   else if (!isSensing && isJudging) titlePrefix = "📚 『直観的・判断型の";
 
-  // --- 後半の16パターン判定 ＆ 約100文字の解説文生成 ---
   let titleSuffix = "オールラウンダー脳』";
   let descriptionText =
     "特定のジャンルに偏らず、幅広い領域の情報に触れているバランス重視の頭脳です。多角的な視点から物事を捉え、柔軟に思考を切り替えることができるのが強みです。";
@@ -262,12 +261,30 @@ function ResultContent() {
   );
   const conservativeRatio = 100 - liberalRatio;
 
-  // --- メーターと十字軸の完全連動計算 ---
+  // 完全連動計算
   const xPos = Math.round(((conservativeRatio - 50) / 50) * 85);
   const yDiff = techCount - newsCount;
   const yPos = Math.min(85, Math.max(-85, yDiff * 18));
 
-  // --- 【全20パターン】スコア状況に応じた脳内文字配置パターンの動的割り当て ---
+  // --- 【新機能】巨大「H」判定 ＆ 25+パターン＋ランダム揺らぎ生成 ---
+  const [isBigHMode, setIsBigHMode] = useState(false);
+  const [randomOffset, setRandomOffset] = useState<number[]>([]);
+
+  useEffect(() => {
+    // スコアでSECRETが高いか、または約8%の確率で「巨大H」モード発動
+    const isSecretHigh = scores.SECRET > 2;
+    const isLuckyBigH = Math.random() < 0.08;
+
+    if (isSecretHigh || isLuckyBigH) {
+      setIsBigHMode(true);
+    }
+
+    // 各文字に少し位置・回転のランダム揺らぎ（エンタメ感向上）を与える
+    const offsets = Array.from({ length: 15 }, () => (Math.random() - 0.5) * 6);
+    setRandomOffset(offsets);
+  }, []);
+
+  // レイアウトパターン判定
   let layoutPatternIndex = 0;
   if (top1 === "IT" && top2 === "TECH") layoutPatternIndex = 0;
   else if (top1 === "POLITICS" && top2 === "KNOWLEDGE") layoutPatternIndex = 1;
@@ -288,11 +305,10 @@ function ResultContent() {
   else if (scores.POLITICS > 5) layoutPatternIndex = 16;
   else if (scores.PLAY > 5) layoutPatternIndex = 17;
   else if (scores.FOOD > 5) layoutPatternIndex = 18;
-  else layoutPatternIndex = 19; // デフォルト・バランス型
+  else layoutPatternIndex = 19;
 
-  // 20種類の文字・座標定義テーブル
+  // 20+パターンの基本定義
   const patterns = [
-    // 1. IT・テックギーク型 (前頭葉・頭頂部にIT/技が集中)
     [
       { top: "22%", left: "42%", word: wordMaster.IT },
       { top: "25%", left: "55%", word: wordMaster.TECH },
@@ -305,7 +321,6 @@ function ResultContent() {
       { top: "58%", left: "48%", word: wordMaster.PLAY },
       { top: "35%", left: "48%", word: wordMaster.IT },
     ],
-    // 2. 政治論客型 (中央・前頭部に政治/知が大きく占有)
     [
       { top: "25%", left: "48%", word: wordMaster.POLITICS },
       { top: "32%", left: "38%", word: wordMaster.POLITICS },
@@ -318,7 +333,6 @@ function ResultContent() {
       { top: "28%", left: "60%", word: wordMaster.KNOWLEDGE },
       { top: "45%", left: "58%", word: wordMaster.POLITICS },
     ],
-    // 3. エンタメ・遊興型 (脳全体に遊/Hが散乱)
     [
       { top: "22%", left: "38%", word: wordMaster.PLAY },
       { top: "26%", left: "62%", word: wordMaster.SECRET },
@@ -331,7 +345,6 @@ function ResultContent() {
       { top: "28%", left: "50%", word: wordMaster.SECRET },
       { top: "48%", left: "55%", word: wordMaster.PLAY },
     ],
-    // 4. 欲望・本能優先型 (後頭部・下部に食/眠が集中)
     [
       { top: "35%", left: "40%", word: wordMaster.FOOD },
       { top: "38%", left: "58%", word: wordMaster.SLEEP },
@@ -344,7 +357,6 @@ function ResultContent() {
       { top: "32%", left: "60%", word: wordMaster.FOOD },
       { top: "50%", left: "48%", word: wordMaster.SLEEP },
     ],
-    // 5. 学究・コレクター型 (学/知が密に詰まった構造)
     [
       { top: "22%", left: "45%", word: wordMaster.STUDY },
       { top: "28%", left: "35%", word: wordMaster.KNOWLEDGE },
@@ -357,7 +369,6 @@ function ResultContent() {
       { top: "54%", left: "58%", word: wordMaster.STUDY },
       { top: "40%", left: "50%", word: wordMaster.KNOWLEDGE },
     ],
-    // 6. 論理アーキテクト型 (IT/学が上下に規則正しく並ぶ)
     [
       { top: "20%", left: "48%", word: wordMaster.IT },
       { top: "27%", left: "40%", word: wordMaster.STUDY },
@@ -370,7 +381,6 @@ function ResultContent() {
       { top: "56%", left: "58%", word: wordMaster.STUDY },
       { top: "36%", left: "36%", word: wordMaster.IT },
     ],
-    // 7. アクティブ発言派 (遊/政治が前頭部を左右に挟む)
     [
       { top: "24%", left: "36%", word: wordMaster.PLAY },
       { top: "25%", left: "58%", word: wordMaster.POLITICS },
@@ -383,7 +393,6 @@ function ResultContent() {
       { top: "30%", left: "48%", word: wordMaster.POLITICS },
       { top: "44%", left: "38%", word: wordMaster.PLAY },
     ],
-    // 8. 生活美学型 (知/食が優しく散在)
     [
       { top: "25%", left: "42%", word: wordMaster.FOOD },
       { top: "28%", left: "56%", word: wordMaster.KNOWLEDGE },
@@ -396,7 +405,6 @@ function ResultContent() {
       { top: "30%", left: "48%", word: wordMaster.KNOWLEDGE },
       { top: "40%", left: "52%", word: wordMaster.FOOD },
     ],
-    // 9. クリエイター型 (技/遊がランダムに飛び交う)
     [
       { top: "21%", left: "40%", word: wordMaster.TECH },
       { top: "26%", left: "60%", word: wordMaster.PLAY },
@@ -409,7 +417,6 @@ function ResultContent() {
       { top: "28%", left: "50%", word: wordMaster.PLAY },
       { top: "43%", left: "52%", word: wordMaster.TECH },
     ],
-    // 10. ナイトライフ型 (H/食が深層部に集中)
     [
       { top: "28%", left: "48%", word: wordMaster.SECRET },
       { top: "34%", left: "38%", word: wordMaster.FOOD },
@@ -422,7 +429,6 @@ function ResultContent() {
       { top: "24%", left: "42%", word: wordMaster.SECRET },
       { top: "40%", left: "54%", word: wordMaster.SECRET },
     ],
-    // 11. 社会派アナリスト (政治/学が中心に密着)
     [
       { top: "22%", left: "46%", word: wordMaster.POLITICS },
       { top: "28%", left: "38%", word: wordMaster.STUDY },
@@ -435,7 +441,6 @@ function ResultContent() {
       { top: "26%", left: "52%", word: wordMaster.STUDY },
       { top: "38%", left: "40%", word: wordMaster.POLITICS },
     ],
-    // 12. スマート効率型 (IT/眠が左右に対比)
     [
       { top: "23%", left: "38%", word: wordMaster.IT },
       { top: "26%", left: "58%", word: wordMaster.SLEEP },
@@ -448,7 +453,6 @@ function ResultContent() {
       { top: "29%", left: "48%", word: wordMaster.SLEEP },
       { top: "43%", left: "52%", word: wordMaster.IT },
     ],
-    // 13. トレンド情報感度型 (知/遊が均等分散)
     [
       { top: "22%", left: "44%", word: wordMaster.PLAY },
       { top: "27%", left: "56%", word: wordMaster.KNOWLEDGE },
@@ -461,7 +465,6 @@ function ResultContent() {
       { top: "28%", left: "40%", word: wordMaster.KNOWLEDGE },
       { top: "38%", left: "54%", word: wordMaster.PLAY },
     ],
-    // 14. マニアック探求型 (H/知が深部にひっそり配置)
     [
       { top: "26%", left: "42%", word: wordMaster.SECRET },
       { top: "30%", left: "55%", word: wordMaster.KNOWLEDGE },
@@ -474,7 +477,6 @@ function ResultContent() {
       { top: "22%", left: "48%", word: wordMaster.KNOWLEDGE },
       { top: "40%", left: "54%", word: wordMaster.SECRET },
     ],
-    // 15. マルチライフ派 (技/食が広く配置)
     [
       { top: "22%", left: "42%", word: wordMaster.TECH },
       { top: "27%", left: "58%", word: wordMaster.FOOD },
@@ -487,7 +489,6 @@ function ResultContent() {
       { top: "28%", left: "48%", word: wordMaster.TECH },
       { top: "40%", left: "52%", word: wordMaster.FOOD },
     ],
-    // 16. IT単体突出型
     [
       { top: "20%", left: "45%", word: wordMaster.IT },
       { top: "26%", left: "35%", word: wordMaster.IT },
@@ -500,7 +501,6 @@ function ResultContent() {
       { top: "55%", left: "56%", word: wordMaster.IT },
       { top: "36%", left: "54%", word: wordMaster.IT },
     ],
-    // 17. 政治単体突出型
     [
       { top: "22%", left: "48%", word: wordMaster.POLITICS },
       { top: "28%", left: "38%", word: wordMaster.POLITICS },
@@ -513,7 +513,6 @@ function ResultContent() {
       { top: "56%", left: "58%", word: wordMaster.POLITICS },
       { top: "38%", left: "52%", word: wordMaster.POLITICS },
     ],
-    // 18. 遊興単体突出型
     [
       { top: "21%", left: "40%", word: wordMaster.PLAY },
       { top: "25%", left: "58%", word: wordMaster.PLAY },
@@ -526,7 +525,6 @@ function ResultContent() {
       { top: "28%", left: "50%", word: wordMaster.PLAY },
       { top: "42%", left: "52%", word: wordMaster.PLAY },
     ],
-    // 19. 食・生活単体突出型
     [
       { top: "24%", left: "42%", word: wordMaster.FOOD },
       { top: "28%", left: "56%", word: wordMaster.FOOD },
@@ -539,7 +537,6 @@ function ResultContent() {
       { top: "30%", left: "48%", word: wordMaster.FOOD },
       { top: "40%", left: "52%", word: wordMaster.FOOD },
     ],
-    // 20. デフォルト・完全バランス型 (全種が均等に散在)
     [
       { top: "21%", left: "48%", word: wordMaster.IT },
       { top: "26%", left: "38%", word: wordMaster.KNOWLEDGE },
@@ -642,23 +639,37 @@ function ResultContent() {
             <h3 className="text-base font-bold text-slate-900 mb-4 w-full border-b pb-2 text-center">
               🧩 あなたの脳内イメージ
             </h3>
-            <div className="relative w-64 h-64 flex items-center justify-center">
+            <div className="relative w-64 h-64 flex items-center justify-center overflow-hidden">
               <Image
                 src="/head.png"
                 alt="頭部シルエット"
                 fill
                 className="object-contain pointer-events-none"
               />
-              <div className="absolute inset-0 select-none font-black">
-                {activeLayout.map((pos, idx) => (
-                  <span
-                    key={idx}
-                    className={`absolute ${pos.word.color} text-base leading-none transform -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-150`}
-                    style={{ top: pos.top, left: pos.left }}
-                  >
-                    {pos.word.text}
+              <div className="absolute inset-0 select-none font-black flex items-center justify-center">
+                {/* 1. 【ご要望の演出】巨大「H」モード（頭の画像と同等の超特大サイズで1文字表示） */}
+                {isBigHMode ? (
+                  <span className="text-fuchsia-600 font-black text-9xl leading-none transform translate-x-3 -translate-y-2 opacity-90 drop-shadow-xl animate-pulse">
+                    H
                   </span>
-                ))}
+                ) : (
+                  /* 2. 通常モード（揺らぎランダムを加えた複数文字配置） */
+                  activeLayout.map((pos, idx) => {
+                    const offset = randomOffset[idx] || 0;
+                    return (
+                      <span
+                        key={idx}
+                        className={`absolute ${pos.word.color} text-base leading-none transform -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-150`}
+                        style={{
+                          top: `calc(${pos.top} + ${offset}px)`,
+                          left: `calc(${pos.left} + ${offset}px)`,
+                        }}
+                      >
+                        {pos.word.text}
+                      </span>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
