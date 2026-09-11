@@ -1,0 +1,38 @@
+name: Update Weekly Questions
+
+on:
+  schedule:
+    # 毎週月曜日の午前9時（日本時間）に自動実行
+    - cron: '0 0 * * 1'
+  workflow_dispatch: # 手動で実行できるボタンも表示
+
+jobs:
+  update-questions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd app-brain-analyzer
+          npm install @google/generative-ai
+
+      - name: Generate New Questions via Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          cd app-brain-analyzer
+          node scripts/generate-questions.mjs
+
+      - name: Commit and Push if updated
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add app-brain-analyzer/app/questions.json
+          git commit -m "Chore: Update weekly questions via Gemini AI [skip ci]" || exit 0
+          git push

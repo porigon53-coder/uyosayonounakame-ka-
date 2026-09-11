@@ -26,10 +26,10 @@ chrome.history.search({ text: "", maxResults: 1000 }, (results) => {
     };
   });
 
-  // 4. データ化して結果ページへ遷移
+  // 4. データ化して本番Webサイトの診断ページへ遷移
   const jsonString = JSON.stringify(selectedItems);
   const encodedData = encodeURIComponent(jsonString);
-  const targetUrl = `http://localhost:3000/result?data=${encodedData}`;
+  const targetUrl = `https://app-brain-analyzer.vercel.app/result?data=${encodedData}`;
 
   chrome.tabs.create({ url: targetUrl });
 });
