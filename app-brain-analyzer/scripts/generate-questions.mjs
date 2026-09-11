@@ -5,7 +5,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function main() {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // モデル名を stable な 'gemini-2.5-flash' に変更
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
 今週の日本の主要ニュースやAbema等の討論番組で話題の政治・経済・社会トピックを参考に、
