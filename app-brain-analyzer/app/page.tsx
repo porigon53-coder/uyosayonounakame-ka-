@@ -83,26 +83,26 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-900 text-slate-100 p-6 relative flex flex-col items-center justify-center">
-      {/* 1. YES/NO 5問モーダル */}
+    <main className="min-h-screen bg-slate-50 text-slate-800 p-6 relative flex flex-col items-center justify-center">
+      {/* 1. YES/NO 5問モーダル（ライトトーン配色統一版） */}
       {showModal && questions.length > 0 && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col items-center">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white border border-slate-100 w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col items-center">
             {/* プログレスバー */}
-            <div className="w-full bg-slate-700 h-1.5 rounded-full mb-6 overflow-hidden">
+            <div className="w-full bg-slate-100 h-2 rounded-full mb-6 overflow-hidden">
               <div
-                className="bg-gradient-to-r from-pink-500 to-purple-500 h-full transition-all duration-300"
+                className="bg-indigo-600 h-full transition-all duration-300 rounded-full"
                 style={{
                   width: `${((currentQIndex + 1) / questions.length) * 100}%`,
                 }}
               />
             </div>
 
-            <span className="text-xs font-semibold text-purple-400 bg-purple-950/60 border border-purple-800 px-3 py-1 rounded-full mb-3">
+            <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full mb-3">
               今週の時事質問 ({currentQIndex + 1}/{questions.length})
             </span>
 
-            <h2 className="text-lg font-bold text-center mb-8 min-h-[60px] flex items-center">
+            <h2 className="text-lg font-bold text-slate-900 text-center mb-8 min-h-[60px] flex items-center leading-relaxed">
               {questions[currentQIndex].text}
             </h2>
 
@@ -110,22 +110,22 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-4 w-full mb-6">
               <button
                 onClick={() => handleAnswer("YES")}
-                className="py-4 bg-emerald-600 hover:bg-emerald-500 font-bold text-lg rounded-xl transition shadow-lg active:scale-95"
+                className="py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base rounded-xl transition shadow-sm active:scale-95 cursor-pointer"
               >
                 YES
               </button>
               <button
                 onClick={() => handleAnswer("NO")}
-                className="py-4 bg-rose-600 hover:bg-rose-500 font-bold text-lg rounded-xl transition shadow-lg active:scale-95"
+                className="py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-base rounded-xl transition shadow-sm active:scale-95 cursor-pointer"
               >
                 NO
               </button>
             </div>
 
-            {/* スキップボタン（下に小さくグレーで表示） */}
+            {/* スキップボタン */}
             <button
               onClick={handleSkip}
-              className="text-xs text-slate-500 hover:text-slate-400 underline transition"
+              className="text-xs text-slate-400 hover:text-slate-600 underline transition cursor-pointer"
             >
               スキップしてメイン画面へ
             </button>
@@ -133,28 +133,31 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* 2. メイン画面 */}
+      {/* 2. メイン画面（結果ページ連動カラー） */}
       <div className="max-w-xl w-full space-y-8 text-center">
         <header className="space-y-2">
-          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
-            ウヨサヨ脳中メーカー
-          </h1>
-          <p className="text-slate-400 text-sm">
-            時事回答 ＆ 閲覧履歴による思考・政治スタンス解析
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <span className="text-3xl">🧠</span>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              ウハサハ脳中メーカー
+            </h1>
+          </div>
+          <p className="text-slate-500 text-xs md:text-sm font-medium">
+            Web閲覧履歴からあなたの脳内・政治思想スタンスを可視化
           </p>
         </header>
 
         {/* 履歴アップロードスペース */}
-        <section className="bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center shadow-xl">
-          <h3 className="font-bold text-slate-200 text-lg mb-2">
+        <section className="bg-white border border-slate-100 rounded-2xl p-8 text-center shadow-sm">
+          <h3 className="font-bold text-slate-900 text-base mb-2">
             📁 閲覧履歴ファイルから精密判定
           </h3>
-          <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+          <p className="text-xs text-slate-500 mb-6 leading-relaxed">
             Chrome等の履歴データ（JSON /
             CSV）をアップロードすると、実際の閲覧傾向からあなたの脳内・政治スタンスを分析します。
           </p>
 
-          <label className="cursor-pointer inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold px-6 py-3.5 rounded-xl transition shadow-lg text-sm active:scale-95">
+          <label className="cursor-pointer inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3.5 rounded-xl transition shadow-xs text-sm active:scale-95">
             <span>ファイルを選択して診断する</span>
             <input
               type="file"
@@ -164,7 +167,7 @@ export default function HomePage() {
             />
           </label>
 
-          <p className="text-[11px] text-slate-500 mt-4">
+          <p className="text-[11px] text-slate-400 mt-4">
             ※ファイル内のデータはブラウザ内でのみ解析され、外部サーバーに送信されることはありません。
           </p>
         </section>
@@ -176,7 +179,7 @@ export default function HomePage() {
               setCurrentQIndex(0);
               setShowModal(true);
             }}
-            className="text-xs text-purple-400 hover:text-purple-300 underline transition"
+            className="text-xs text-indigo-600 hover:text-indigo-800 underline transition cursor-pointer"
           >
             もう一度 5問アンケートに答える
           </button>
