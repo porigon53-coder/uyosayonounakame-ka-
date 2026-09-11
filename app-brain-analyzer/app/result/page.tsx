@@ -261,8 +261,11 @@ function ResultContent() {
     Math.max(15, Math.round(50 + (newsCount - techCount) * 5)),
   );
   const conservativeRatio = 100 - liberalRatio;
-  const xPos = Math.min(40, Math.max(-40, (newsCount - techCount) * 8));
-  const yPos = Math.min(40, Math.max(-40, (techCount - newsCount) * 8));
+
+  // よりダイナミックに位置が変化する計算式（幅を±90pxに拡大）
+  const diff = newsCount - techCount;
+  const xPos = Math.min(90, Math.max(-90, diff * 18));
+  const yPos = Math.min(90, Math.max(-90, -diff * 18));
 
   // 80%指定の均一配置レイアウト
   const unifiedLayout = [
@@ -479,11 +482,11 @@ function ResultContent() {
                 className="bg-white rounded-xl p-4 border border-slate-100 flex gap-4 shadow-xs"
               >
                 <div className="relative w-20 h-28 flex-shrink-0 rounded bg-slate-100 overflow-hidden border border-slate-200 shadow-2xs">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={book.imageUrl}
                     alt={book.title}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full object-cover"
                   />
                 </div>
 
@@ -529,7 +532,7 @@ function ResultContent() {
       <div className="max-w-5xl w-full text-center mb-6">
         <button
           onClick={handleShare}
-          className="w-full sm:w-auto bg-black hover:bg-slate-800 text-white font-bold px-10 py-3.5 rounded-full transition shadow-md text-sm active:scale-95"
+          className="w-full sm:w-auto bg-black hover:bg-slate-800 text-white font-bold px-10 py-3.5 rounded-full transition shadow-md text-sm active:scale-95 cursor-pointer"
         >
           𝕏 (Twitter) で診断結果をシェアする
         </button>
