@@ -42,8 +42,9 @@ function ResultContent() {
     }
   }, []);
 
-  // 全9種類の文字マスタ
+  // 全10種類の文字マスタ（「金」を追加）
   const wordMaster: { [key: string]: { text: string; color: string } } = {
+    MONEY: { text: "金", color: "text-amber-500" },
     IT: { text: "IT", color: "text-indigo-900" },
     KNOWLEDGE: { text: "知", color: "text-blue-600" },
     PLAY: { text: "遊", color: "text-pink-500" },
@@ -57,6 +58,7 @@ function ResultContent() {
 
   // 履歴キーワード解析
   const scores: { [key: string]: number } = {
+    MONEY: 0,
     IT: 0,
     KNOWLEDGE: 0,
     PLAY: 0,
@@ -71,6 +73,17 @@ function ResultContent() {
   historyList.forEach((item) => {
     const text = (item.title + " " + item.domain).toLowerCase();
 
+    if (
+      text.includes("money") ||
+      text.includes("bank") ||
+      text.includes("pay") ||
+      text.includes("amazon") ||
+      text.includes("株") ||
+      text.includes("投資") ||
+      text.includes("金")
+    ) {
+      scores.MONEY += 3;
+    }
     if (
       text.includes("github") ||
       text.includes("qiita") ||
@@ -149,11 +162,15 @@ function ResultContent() {
 
   const sortedKeys = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
   const selectedKeys = sortedKeys.slice(0, 4);
+  const topWord1 = wordMaster[selectedKeys[0]] || wordMaster.MONEY;
+  const topWord2 = wordMaster[selectedKeys[1]] || wordMaster.KNOWLEDGE;
 
   // MBTI対立軸
   const isExtrovert = scores.PLAY + scores.POLITICS > scores.IT + scores.STUDY;
-  const isSensing = scores.FOOD + scores.SLEEP > scores.TECH + scores.KNOWLEDGE;
-  const isThinking = scores.IT + scores.POLITICS > scores.PLAY + scores.SECRET;
+  const isSensing =
+    scores.FOOD + scores.SLEEP + scores.MONEY > scores.TECH + scores.KNOWLEDGE;
+  const isThinking =
+    scores.IT + scores.POLITICS + scores.MONEY > scores.PLAY + scores.SECRET;
   const isJudging = scores.STUDY + scores.KNOWLEDGE > scores.PLAY + scores.FOOD;
 
   let titlePrefix = "🧠 『内向的・直観型の";
@@ -172,7 +189,11 @@ function ResultContent() {
   const top1 = selectedKeys[0];
   const top2 = selectedKeys[1];
 
-  if (
+  if (top1 === "MONEY" || top2 === "MONEY") {
+    titleSuffix = "マネー・資産形成重視脳』";
+    descriptionText =
+      "経済、投資、ショッピングや金融に関連する関心が非常に高い頭脳です。実益や将来の安定、コストパフォーマンスを意識した現実的な思考展開を得意としています。";
+  } else if (
     (top1 === "IT" && top2 === "TECH") ||
     (top1 === "TECH" && top2 === "IT")
   ) {
@@ -215,38 +236,6 @@ function ResultContent() {
     titleSuffix = "デジタルクリエイター』";
     descriptionText =
       "最新技術とエンタメ表現を組み合わせて情報収集するアイデア脳です。創造的なアウトプットや新しい表現技法に対し、常に高い関心とアンテナを張り巡らせています。";
-  } else if (top1 === "PLAY" || top2 === "KNOWLEDGE") {
-    titleSuffix = "トレンドキャッチャー』";
-    descriptionText =
-      "雑学やエンタメの情報を幅広く拾い上げ、世の中の流行をすばやくキャッチする頭脳です。旺盛な好奇心で興味の幅を広げ、周囲とのコミュニケーションに活かします。";
-  } else if (top1 === "IT" || top2 === "STUDY") {
-    titleSuffix = "論理派アーキテクト』";
-    descriptionText =
-      "プログラミングや学術論文など、厳密な構造を持つ情報を好む理論派頭脳です。体系的な思考を得意とし、物事の本質やルールを筋道立てて構築・解釈していきます。";
-  } else if (top1 === "FOOD" || top2 === "KNOWLEDGE") {
-    titleSuffix = "生活美学スペシャリスト』";
-    descriptionText =
-      "食の追求や実用知識の閲覧が多く、日常生活を豊かに彩る智恵に長けた頭脳です。実益とこだわりを兼ね備え、ライフスタイルの質を高めることに思考を傾けます。";
-  } else if (top1 === "SECRET" || top2 === "KNOWLEDGE") {
-    titleSuffix = "ディープダイバー』";
-    descriptionText =
-      "ディープな検索履歴や深掘り調査が特徴的で、表面化しないマニアックな知を求める頭脳です。独自の着眼点で誰も気づかない真相や裏情報を探ることに長けています。";
-  } else if (top1 === "PLAY" || top2 === "POLITICS") {
-    titleSuffix = "アクティブインフルエンサー』";
-    descriptionText =
-      "SNSでの話題性や政治・社会問題を同時にチェックする発言力溢れる頭脳です。世論の空気感を敏感に捉え、自身の意見やスタンスを外にアピールする力を持っています。";
-  } else if (top1 === "SLEEP" || top2 === "IT") {
-    titleSuffix = "リラックスストラテジスト』";
-    descriptionText =
-      "効率的なワークスタイルと十分な休息の双方を追求するスマート思考の頭脳です。無駄なコストを削ぎ落とし、最短距離で成果と安心感を獲得しようと試みます。";
-  } else if (top1 === "SECRET" || top2 === "FOOD") {
-    titleSuffix = "ナイトライフプロデューサー』";
-    descriptionText =
-      "本能的な欲求やプライベートの楽しみに素直な人間味溢れる頭脳です。自分の好きな空間や時間を全力で楽しむためのリサーチ力と情熱に長けています。";
-  } else if (top1 === "TECH" || top2 === "FOOD") {
-    titleSuffix = "マルチジャンルナビゲーター』";
-    descriptionText =
-      "実用的な技術から趣味・ライフスタイルまで縦横無尽にアクセスするフレキシブル頭脳です。偏りのない視野で日常の利便性を追求する器用さを持っています。";
   }
 
   const diagnosisTitle = `${titlePrefix}${titleSuffix}`;
@@ -264,276 +253,212 @@ function ResultContent() {
   const yDiff = techCount - newsCount;
   const yPos = Math.min(85, Math.max(-85, yDiff * 18));
 
-  // --- 【確実に動作するランダム生成システム】 ---
-  const [isBigHMode, setIsBigHMode] = useState(false);
-  const [activePatternIndex, setActivePatternIndex] = useState(0);
-  const [randomOffsets, setRandomOffsets] = useState<
-    { x: number; y: number }[]
-  >([]);
+  // 幾何学レイアウト生成
+  const [layoutStyle, setLayoutStyle] = useState<number>(0);
+  const [isBigH, setIsBigH] = useState<boolean>(false);
 
   useEffect(() => {
-    // 1. 巨大「H」モードの判定（20%の確率 OR SECRETスコアが一定以上）
-    const roll = Math.random();
-    const isBigH = roll < 0.2 || scores.SECRET > 3;
-    setIsBigHMode(isBigH);
+    const rollBigH = Math.random() < 0.2 || scores.SECRET > 3;
+    setIsBigH(rollBigH);
 
-    // 2. 20種類のパターンのうち、スコア＋ランダム要素で決定
-    const randomIndex = Math.floor(Math.random() * 20);
-    setActivePatternIndex(randomIndex);
-
-    // 3. 各文字の位置の揺らぎ（±8px）
-    const offsets = Array.from({ length: 15 }, () => ({
-      x: (Math.random() - 0.5) * 16,
-      y: (Math.random() - 0.5) * 16,
-    }));
-    setRandomOffsets(offsets);
+    const styleRoll = Math.floor(Math.random() * 7);
+    setLayoutStyle(styleRoll);
   }, []);
 
-  // 20種類の基本レイアウト
-  const patterns = [
-    [
-      { top: "22%", left: "42%", word: wordMaster.IT },
-      { top: "25%", left: "55%", word: wordMaster.TECH },
-      { top: "30%", left: "35%", word: wordMaster.IT },
-      { top: "32%", left: "62%", word: wordMaster.TECH },
-      { top: "38%", left: "45%", word: wordMaster.IT },
-      { top: "42%", left: "55%", word: wordMaster.KNOWLEDGE },
-      { top: "48%", left: "38%", word: wordMaster.STUDY },
-      { top: "52%", left: "60%", word: wordMaster.TECH },
-      { top: "58%", left: "48%", word: wordMaster.PLAY },
-      { top: "35%", left: "48%", word: wordMaster.IT },
-    ],
-    [
-      { top: "25%", left: "48%", word: wordMaster.POLITICS },
-      { top: "32%", left: "38%", word: wordMaster.POLITICS },
-      { top: "33%", left: "58%", word: wordMaster.KNOWLEDGE },
-      { top: "40%", left: "46%", word: wordMaster.POLITICS },
-      { top: "42%", left: "65%", word: wordMaster.STUDY },
-      { top: "48%", left: "35%", word: wordMaster.KNOWLEDGE },
-      { top: "50%", left: "52%", word: wordMaster.POLITICS },
-      { top: "56%", left: "42%", word: wordMaster.IT },
-      { top: "28%", left: "60%", word: wordMaster.KNOWLEDGE },
-      { top: "45%", left: "58%", word: wordMaster.POLITICS },
-    ],
-    [
-      { top: "22%", left: "38%", word: wordMaster.PLAY },
-      { top: "26%", left: "62%", word: wordMaster.SECRET },
-      { top: "32%", left: "48%", word: wordMaster.PLAY },
-      { top: "38%", left: "34%", word: wordMaster.SECRET },
-      { top: "40%", left: "58%", word: wordMaster.PLAY },
-      { top: "46%", left: "44%", word: wordMaster.FOOD },
-      { top: "52%", left: "65%", word: wordMaster.PLAY },
-      { top: "55%", left: "36%", word: wordMaster.PLAY },
-      { top: "28%", left: "50%", word: wordMaster.SECRET },
-      { top: "48%", left: "55%", word: wordMaster.PLAY },
-    ],
-    [
-      { top: "35%", left: "40%", word: wordMaster.FOOD },
-      { top: "38%", left: "58%", word: wordMaster.SLEEP },
-      { top: "44%", left: "32%", word: wordMaster.FOOD },
-      { top: "45%", left: "50%", word: wordMaster.SLEEP },
-      { top: "48%", left: "65%", word: wordMaster.FOOD },
-      { top: "53%", left: "42%", word: wordMaster.SLEEP },
-      { top: "56%", left: "55%", word: wordMaster.FOOD },
-      { top: "28%", left: "48%", word: wordMaster.PLAY },
-      { top: "32%", left: "60%", word: wordMaster.FOOD },
-      { top: "50%", left: "48%", word: wordMaster.SLEEP },
-    ],
-    [
-      { top: "22%", left: "45%", word: wordMaster.STUDY },
-      { top: "28%", left: "35%", word: wordMaster.KNOWLEDGE },
-      { top: "29%", left: "56%", word: wordMaster.STUDY },
-      { top: "35%", left: "44%", word: wordMaster.KNOWLEDGE },
-      { top: "38%", left: "64%", word: wordMaster.STUDY },
-      { top: "44%", left: "36%", word: wordMaster.STUDY },
-      { top: "46%", left: "52%", word: wordMaster.KNOWLEDGE },
-      { top: "52%", left: "42%", word: wordMaster.IT },
-      { top: "54%", left: "58%", word: wordMaster.STUDY },
-      { top: "40%", left: "50%", word: wordMaster.KNOWLEDGE },
-    ],
-    [
-      { top: "20%", left: "48%", word: wordMaster.IT },
-      { top: "27%", left: "40%", word: wordMaster.STUDY },
-      { top: "28%", left: "58%", word: wordMaster.IT },
-      { top: "35%", left: "48%", word: wordMaster.TECH },
-      { top: "42%", left: "38%", word: wordMaster.IT },
-      { top: "43%", left: "60%", word: wordMaster.STUDY },
-      { top: "50%", left: "48%", word: wordMaster.IT },
-      { top: "55%", left: "38%", word: wordMaster.KNOWLEDGE },
-      { top: "56%", left: "58%", word: wordMaster.STUDY },
-      { top: "36%", left: "36%", word: wordMaster.IT },
-    ],
-    [
-      { top: "24%", left: "36%", word: wordMaster.PLAY },
-      { top: "25%", left: "58%", word: wordMaster.POLITICS },
-      { top: "32%", left: "46%", word: wordMaster.PLAY },
-      { top: "38%", left: "34%", word: wordMaster.POLITICS },
-      { top: "40%", left: "60%", word: wordMaster.PLAY },
-      { top: "46%", left: "48%", word: wordMaster.POLITICS },
-      { top: "52%", left: "38%", word: wordMaster.KNOWLEDGE },
-      { top: "54%", left: "58%", word: wordMaster.PLAY },
-      { top: "30%", left: "48%", word: wordMaster.POLITICS },
-      { top: "44%", left: "38%", word: wordMaster.PLAY },
-    ],
-    [
-      { top: "25%", left: "42%", word: wordMaster.FOOD },
-      { top: "28%", left: "56%", word: wordMaster.KNOWLEDGE },
-      { top: "34%", left: "36%", word: wordMaster.KNOWLEDGE },
-      { top: "36%", left: "48%", word: wordMaster.FOOD },
-      { top: "42%", left: "62%", word: wordMaster.SLEEP },
-      { top: "46%", left: "40%", word: wordMaster.FOOD },
-      { top: "50%", left: "54%", word: wordMaster.KNOWLEDGE },
-      { top: "55%", left: "45%", word: wordMaster.FOOD },
-      { top: "30%", left: "48%", word: wordMaster.KNOWLEDGE },
-      { top: "40%", left: "52%", word: wordMaster.FOOD },
-    ],
-    [
-      { top: "21%", left: "40%", word: wordMaster.TECH },
-      { top: "26%", left: "60%", word: wordMaster.PLAY },
-      { top: "31%", left: "48%", word: wordMaster.TECH },
-      { top: "36%", left: "35%", word: wordMaster.PLAY },
-      { top: "39%", left: "58%", word: wordMaster.TECH },
-      { top: "45%", left: "44%", word: wordMaster.IT },
-      { top: "50%", left: "62%", word: wordMaster.PLAY },
-      { top: "54%", left: "38%", word: wordMaster.TECH },
-      { top: "28%", left: "50%", word: wordMaster.PLAY },
-      { top: "43%", left: "52%", word: wordMaster.TECH },
-    ],
-    [
-      { top: "28%", left: "48%", word: wordMaster.SECRET },
-      { top: "34%", left: "38%", word: wordMaster.FOOD },
-      { top: "36%", left: "58%", word: wordMaster.SECRET },
-      { top: "42%", left: "46%", word: wordMaster.SECRET },
-      { top: "45%", left: "64%", word: wordMaster.FOOD },
-      { top: "50%", left: "36%", word: wordMaster.SECRET },
-      { top: "52%", left: "52%", word: wordMaster.PLAY },
-      { top: "56%", left: "42%", word: wordMaster.FOOD },
-      { top: "24%", left: "42%", word: wordMaster.SECRET },
-      { top: "40%", left: "54%", word: wordMaster.SECRET },
-    ],
-    [
-      { top: "22%", left: "46%", word: wordMaster.POLITICS },
-      { top: "28%", left: "38%", word: wordMaster.STUDY },
-      { top: "30%", left: "58%", word: wordMaster.POLITICS },
-      { top: "36%", left: "48%", word: wordMaster.KNOWLEDGE },
-      { top: "42%", left: "36%", word: wordMaster.POLITICS },
-      { top: "44%", left: "58%", word: wordMaster.STUDY },
-      { top: "50%", left: "46%", word: wordMaster.POLITICS },
-      { top: "54%", left: "56%", word: wordMaster.KNOWLEDGE },
-      { top: "26%", left: "52%", word: wordMaster.STUDY },
-      { top: "38%", left: "40%", word: wordMaster.POLITICS },
-    ],
-    [
-      { top: "23%", left: "38%", word: wordMaster.IT },
-      { top: "26%", left: "58%", word: wordMaster.SLEEP },
-      { top: "32%", left: "48%", word: wordMaster.IT },
-      { top: "37%", left: "36%", word: wordMaster.SLEEP },
-      { top: "40%", left: "60%", word: wordMaster.IT },
-      { top: "46%", left: "44%", word: wordMaster.TECH },
-      { top: "51%", left: "62%", word: wordMaster.SLEEP },
-      { top: "55%", left: "38%", word: wordMaster.IT },
-      { top: "29%", left: "48%", word: wordMaster.SLEEP },
-      { top: "43%", left: "52%", word: wordMaster.IT },
-    ],
-    [
-      { top: "22%", left: "44%", word: wordMaster.PLAY },
-      { top: "27%", left: "56%", word: wordMaster.KNOWLEDGE },
-      { top: "32%", left: "36%", word: wordMaster.PLAY },
-      { top: "35%", left: "48%", word: wordMaster.KNOWLEDGE },
-      { top: "41%", left: "62%", word: wordMaster.PLAY },
-      { top: "45%", left: "40%", word: wordMaster.KNOWLEDGE },
-      { top: "50%", left: "52%", word: wordMaster.PLAY },
-      { top: "54%", left: "42%", word: wordMaster.KNOWLEDGE },
-      { top: "28%", left: "40%", word: wordMaster.KNOWLEDGE },
-      { top: "38%", left: "54%", word: wordMaster.PLAY },
-    ],
-    [
-      { top: "26%", left: "42%", word: wordMaster.SECRET },
-      { top: "30%", left: "55%", word: wordMaster.KNOWLEDGE },
-      { top: "35%", left: "36%", word: wordMaster.SECRET },
-      { top: "38%", left: "48%", word: wordMaster.SECRET },
-      { top: "43%", left: "60%", word: wordMaster.KNOWLEDGE },
-      { top: "48%", left: "40%", word: wordMaster.SECRET },
-      { top: "52%", left: "52%", word: wordMaster.SECRET },
-      { top: "56%", left: "44%", word: wordMaster.STUDY },
-      { top: "22%", left: "48%", word: wordMaster.KNOWLEDGE },
-      { top: "40%", left: "54%", word: wordMaster.SECRET },
-    ],
-    [
-      { top: "22%", left: "42%", word: wordMaster.TECH },
-      { top: "27%", left: "58%", word: wordMaster.FOOD },
-      { top: "32%", left: "36%", word: wordMaster.FOOD },
-      { top: "36%", left: "48%", word: wordMaster.TECH },
-      { top: "41%", left: "60%", word: wordMaster.FOOD },
-      { top: "46%", left: "40%", word: wordMaster.TECH },
-      { top: "50%", left: "54%", word: wordMaster.SLEEP },
-      { top: "54%", left: "44%", word: wordMaster.FOOD },
-      { top: "28%", left: "48%", word: wordMaster.TECH },
-      { top: "40%", left: "52%", word: wordMaster.FOOD },
-    ],
-    [
-      { top: "20%", left: "45%", word: wordMaster.IT },
-      { top: "26%", left: "35%", word: wordMaster.IT },
-      { top: "28%", left: "58%", word: wordMaster.IT },
-      { top: "34%", left: "46%", word: wordMaster.TECH },
-      { top: "40%", left: "38%", word: wordMaster.IT },
-      { top: "42%", left: "60%", word: wordMaster.IT },
-      { top: "48%", left: "48%", word: wordMaster.IT },
-      { top: "53%", left: "38%", word: wordMaster.STUDY },
-      { top: "55%", left: "56%", word: wordMaster.IT },
-      { top: "36%", left: "54%", word: wordMaster.IT },
-    ],
-    [
-      { top: "22%", left: "48%", word: wordMaster.POLITICS },
-      { top: "28%", left: "38%", word: wordMaster.POLITICS },
-      { top: "30%", left: "58%", word: wordMaster.POLITICS },
-      { top: "36%", left: "46%", word: wordMaster.POLITICS },
-      { top: "42%", left: "35%", word: wordMaster.POLITICS },
-      { top: "44%", left: "60%", word: wordMaster.KNOWLEDGE },
-      { top: "50%", left: "48%", word: wordMaster.POLITICS },
-      { top: "54%", left: "38%", word: wordMaster.POLITICS },
-      { top: "56%", left: "58%", word: wordMaster.POLITICS },
-      { top: "38%", left: "52%", word: wordMaster.POLITICS },
-    ],
-    [
-      { top: "21%", left: "40%", word: wordMaster.PLAY },
-      { top: "25%", left: "58%", word: wordMaster.PLAY },
-      { top: "30%", left: "48%", word: wordMaster.PLAY },
-      { top: "36%", left: "36%", word: wordMaster.PLAY },
-      { top: "38%", left: "60%", word: wordMaster.PLAY },
-      { top: "44%", left: "44%", word: wordMaster.PLAY },
-      { top: "50%", left: "62%", word: wordMaster.SECRET },
-      { top: "53%", left: "38%", word: wordMaster.PLAY },
-      { top: "28%", left: "50%", word: wordMaster.PLAY },
-      { top: "42%", left: "52%", word: wordMaster.PLAY },
-    ],
-    [
-      { top: "24%", left: "42%", word: wordMaster.FOOD },
-      { top: "28%", left: "56%", word: wordMaster.FOOD },
-      { top: "33%", left: "36%", word: wordMaster.FOOD },
-      { top: "36%", left: "48%", word: wordMaster.FOOD },
-      { top: "41%", left: "62%", word: wordMaster.SLEEP },
-      { top: "46%", left: "40%", word: wordMaster.FOOD },
-      { top: "50%", left: "54%", word: wordMaster.FOOD },
-      { top: "54%", left: "44%", word: wordMaster.FOOD },
-      { top: "30%", left: "48%", word: wordMaster.FOOD },
-      { top: "40%", left: "52%", word: wordMaster.FOOD },
-    ],
-    [
-      { top: "21%", left: "48%", word: wordMaster.IT },
-      { top: "26%", left: "38%", word: wordMaster.KNOWLEDGE },
-      { top: "28%", left: "58%", word: wordMaster.PLAY },
-      { top: "34%", left: "46%", word: wordMaster.TECH },
-      { top: "39%", left: "35%", word: wordMaster.POLITICS },
-      { top: "41%", left: "60%", word: wordMaster.STUDY },
-      { top: "47%", left: "48%", word: wordMaster.FOOD },
-      { top: "52%", left: "38%", word: wordMaster.SLEEP },
-      { top: "54%", left: "56%", word: wordMaster.SECRET },
-      { top: "36%", left: "52%", word: wordMaster.IT },
-    ],
+  const circlePositions = [
+    { top: "18%", left: "50%" },
+    { top: "20%", left: "62%" },
+    { top: "25%", left: "72%" },
+    { top: "33%", left: "78%" },
+    { top: "43%", left: "78%" },
+    { top: "52%", left: "74%" },
+    { top: "58%", left: "65%" },
+    { top: "60%", left: "53%" },
+    { top: "58%", left: "42%" },
+    { top: "52%", left: "33%" },
+    { top: "43%", left: "28%" },
+    { top: "33%", left: "28%" },
+    { top: "25%", left: "33%" },
+    { top: "20%", left: "40%" },
+    { top: "18%", left: "45%" },
+    { top: "38%", left: "50%" },
   ];
 
-  const activeLayout = patterns[activePatternIndex] || patterns[0];
+  const renderBrainWords = () => {
+    if (isBigH) {
+      return (
+        <span className="text-fuchsia-600 font-black text-9xl leading-none transform translate-x-2 -translate-y-2 opacity-95 drop-shadow-2xl animate-pulse">
+          H
+        </span>
+      );
+    }
+
+    if (layoutStyle === 0) {
+      return (
+        <>
+          {circlePositions.slice(0, 15).map((pos, idx) => (
+            <span
+              key={idx}
+              className={`absolute ${topWord1.color} text-sm font-bold`}
+              style={{ top: pos.top, left: pos.left }}
+            >
+              {topWord1.text}
+            </span>
+          ))}
+          <span
+            className={`absolute ${topWord2.color} text-2xl font-black transform -translate-x-1/2 -translate-y-1/2`}
+            style={{ top: "40%", left: "51%" }}
+          >
+            {topWord2.text}
+          </span>
+        </>
+      );
+    }
+
+    if (layoutStyle === 1) {
+      return circlePositions.slice(0, 15).map((pos, idx) => (
+        <span
+          key={idx}
+          className={`absolute ${idx % 2 === 0 ? topWord1.color : topWord2.color} text-sm font-bold`}
+          style={{ top: pos.top, left: pos.left }}
+        >
+          {idx % 2 === 0 ? topWord1.text : topWord2.text}
+        </span>
+      ));
+    }
+
+    if (layoutStyle === 2) {
+      const topArc = [
+        { top: "18%", left: "38%" },
+        { top: "17%", left: "46%" },
+        { top: "17%", left: "54%" },
+        { top: "18%", left: "62%" },
+        { top: "22%", left: "32%" },
+        { top: "22%", left: "68%" },
+        { top: "27%", left: "27%" },
+        { top: "27%", left: "73%" },
+      ];
+      return (
+        <>
+          {topArc.map((pos, idx) => (
+            <span
+              key={idx}
+              className={`absolute ${topWord1.color} text-sm font-bold`}
+              style={{ top: pos.top, left: pos.left }}
+            >
+              {topWord1.text}
+            </span>
+          ))}
+          <span
+            className={`absolute ${topWord2.color} text-3xl font-black`}
+            style={{ top: "45%", left: "48%" }}
+          >
+            {topWord2.text}
+          </span>
+        </>
+      );
+    }
+
+    if (layoutStyle === 3) {
+      const bottomArc = [
+        { top: "50%", left: "30%" },
+        { top: "56%", left: "38%" },
+        { top: "60%", left: "48%" },
+        { top: "58%", left: "58%" },
+        { top: "52%", left: "68%" },
+        { top: "45%", left: "75%" },
+      ];
+      return (
+        <>
+          {bottomArc.map((pos, idx) => (
+            <span
+              key={idx}
+              className={`absolute ${topWord1.color} text-sm font-bold`}
+              style={{ top: pos.top, left: pos.left }}
+            >
+              {topWord1.text}
+            </span>
+          ))}
+          <span
+            className={`absolute ${topWord2.color} text-3xl font-black`}
+            style={{ top: "30%", left: "48%" }}
+          >
+            {topWord2.text}
+          </span>
+        </>
+      );
+    }
+
+    if (layoutStyle === 4) {
+      const leftPositions = [
+        { top: "22%", left: "32%" },
+        { top: "28%", left: "35%" },
+        { top: "35%", left: "30%" },
+        { top: "42%", left: "32%" },
+        { top: "48%", left: "35%" },
+        { top: "25%", left: "42%" },
+        { top: "38%", left: "42%" },
+      ];
+      const rightPositions = [
+        { top: "22%", left: "60%" },
+        { top: "28%", left: "65%" },
+        { top: "35%", left: "70%" },
+        { top: "42%", left: "68%" },
+        { top: "48%", left: "62%" },
+        { top: "25%", left: "52%" },
+        { top: "38%", left: "52%" },
+      ];
+      return (
+        <>
+          {leftPositions.map((pos, idx) => (
+            <span
+              key={`l-${idx}`}
+              className={`absolute ${topWord1.color} text-sm font-bold`}
+              style={{ top: pos.top, left: pos.left }}
+            >
+              {topWord1.text}
+            </span>
+          ))}
+          {rightPositions.map((pos, idx) => (
+            <span
+              key={`r-${idx}`}
+              className={`absolute ${topWord2.color} text-sm font-bold`}
+              style={{ top: pos.top, left: pos.left }}
+            >
+              {topWord2.text}
+            </span>
+          ))}
+        </>
+      );
+    }
+
+    if (layoutStyle === 5) {
+      return (
+        <>
+          <span
+            className={`absolute ${topWord1.color} text-6xl font-black transform -translate-x-1/2 -translate-y-1/2`}
+            style={{ top: "40%", left: "38%" }}
+          >
+            {topWord1.text}
+          </span>
+          <span
+            className={`absolute ${topWord2.color} text-6xl font-black transform -translate-x-1/2 -translate-y-1/2`}
+            style={{ top: "40%", left: "64%" }}
+          >
+            {topWord2.text}
+          </span>
+        </>
+      );
+    }
+
+    return (
+      <span
+        className={`${topWord1.color} font-black text-8xl leading-none transform translate-x-1 -translate-y-2 opacity-90 drop-shadow-xl`}
+      >
+        {topWord1.text}
+      </span>
+    );
+  };
 
   // おすすめ本2冊のデータ
   const recommendedBooks = [
@@ -570,7 +495,7 @@ function ResultContent() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-800 p-6 flex flex-col items-center">
-      {/* 0. 中央配置されたメインタイトルヘッダー */}
+      {/* 0. メインタイトル */}
       <header className="max-w-5xl w-full text-center mb-4">
         <div className="flex items-center justify-center gap-2 mb-1">
           <span className="text-3xl">🧠</span>
@@ -583,13 +508,12 @@ function ResultContent() {
         </p>
       </header>
 
-      {/* タイトルのすぐ下：Google 広告表示エリア */}
+      {/* Google 広告エリア */}
       <div className="max-w-5xl w-full mb-6">
         <div className="bg-slate-100 rounded-xl border border-slate-200/80 p-2 text-center min-h-[90px] flex flex-col items-center justify-center overflow-hidden">
           <span className="text-[10px] text-slate-400 font-medium mb-1 block">
             スポンサーリンク
           </span>
-
           <ins
             className="adsbygoogle"
             style={{ display: "block", width: "100%", minHeight: "90px" }}
@@ -629,29 +553,7 @@ function ResultContent() {
                 className="object-contain pointer-events-none"
               />
               <div className="absolute inset-0 select-none font-black flex items-center justify-center">
-                {/* 【20%の確率で発動】巨大「H」超特大演出 */}
-                {isBigHMode ? (
-                  <span className="text-fuchsia-600 font-black text-9xl leading-none transform translate-x-2 -translate-y-2 opacity-95 drop-shadow-2xl animate-pulse">
-                    H
-                  </span>
-                ) : (
-                  /* 通常モード：20種類×ランダム位置揺らぎ */
-                  activeLayout.map((pos, idx) => {
-                    const offset = randomOffsets[idx] || { x: 0, y: 0 };
-                    return (
-                      <span
-                        key={idx}
-                        className={`absolute ${pos.word.color} text-base leading-none transform -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-150`}
-                        style={{
-                          top: `calc(${pos.top} + ${offset.y}px)`,
-                          left: `calc(${pos.left} + ${offset.x}px)`,
-                        }}
-                      >
-                        {pos.word.text}
-                      </span>
-                    );
-                  })
-                )}
+                {renderBrainWords()}
               </div>
             </div>
           </div>
