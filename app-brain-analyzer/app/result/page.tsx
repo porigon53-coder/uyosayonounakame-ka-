@@ -150,7 +150,7 @@ function ResultContent() {
   const sortedKeys = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
   const selectedKeys = sortedKeys.slice(0, 4);
 
-  // --- MBTI対立軸に基づく前半の判定（8パターン） ---
+  // MBTI対立軸
   const isExtrovert = scores.PLAY + scores.POLITICS > scores.IT + scores.STUDY;
   const isSensing = scores.FOOD + scores.SLEEP > scores.TECH + scores.KNOWLEDGE;
   const isThinking = scores.IT + scores.POLITICS > scores.PLAY + scores.SECRET;
@@ -254,60 +254,42 @@ function ResultContent() {
   const newsCount = scores.KNOWLEDGE + scores.POLITICS;
   const techCount = scores.IT + scores.TECH;
 
-  // メーターの比率算出 (リベラル % / 保守 %)
   const liberalRatio = Math.min(
     85,
     Math.max(15, Math.round(50 + (newsCount - techCount) * 5)),
   );
   const conservativeRatio = 100 - liberalRatio;
 
-  // 完全連動計算
   const xPos = Math.round(((conservativeRatio - 50) / 50) * 85);
   const yDiff = techCount - newsCount;
   const yPos = Math.min(85, Math.max(-85, yDiff * 18));
 
-  // --- 【新機能】巨大「H」判定 ＆ 25+パターン＋ランダム揺らぎ生成 ---
+  // --- 【確実に動作するランダム生成システム】 ---
   const [isBigHMode, setIsBigHMode] = useState(false);
-  const [randomOffset, setRandomOffset] = useState<number[]>([]);
+  const [activePatternIndex, setActivePatternIndex] = useState(0);
+  const [randomOffsets, setRandomOffsets] = useState<
+    { x: number; y: number }[]
+  >([]);
 
   useEffect(() => {
-    // スコアでSECRETが高いか、または約8%の確率で「巨大H」モード発動
-    const isSecretHigh = scores.SECRET > 2;
-    const isLuckyBigH = Math.random() < 0.08;
+    // 1. 巨大「H」モードの判定（20%の確率 OR SECRETスコアが一定以上）
+    const roll = Math.random();
+    const isBigH = roll < 0.2 || scores.SECRET > 3;
+    setIsBigHMode(isBigH);
 
-    if (isSecretHigh || isLuckyBigH) {
-      setIsBigHMode(true);
-    }
+    // 2. 20種類のパターンのうち、スコア＋ランダム要素で決定
+    const randomIndex = Math.floor(Math.random() * 20);
+    setActivePatternIndex(randomIndex);
 
-    // 各文字に少し位置・回転のランダム揺らぎ（エンタメ感向上）を与える
-    const offsets = Array.from({ length: 15 }, () => (Math.random() - 0.5) * 6);
-    setRandomOffset(offsets);
+    // 3. 各文字の位置の揺らぎ（±8px）
+    const offsets = Array.from({ length: 15 }, () => ({
+      x: (Math.random() - 0.5) * 16,
+      y: (Math.random() - 0.5) * 16,
+    }));
+    setRandomOffsets(offsets);
   }, []);
 
-  // レイアウトパターン判定
-  let layoutPatternIndex = 0;
-  if (top1 === "IT" && top2 === "TECH") layoutPatternIndex = 0;
-  else if (top1 === "POLITICS" && top2 === "KNOWLEDGE") layoutPatternIndex = 1;
-  else if (top1 === "PLAY" && top2 === "SECRET") layoutPatternIndex = 2;
-  else if (top1 === "FOOD" && top2 === "SLEEP") layoutPatternIndex = 3;
-  else if (top1 === "STUDY" && top2 === "KNOWLEDGE") layoutPatternIndex = 4;
-  else if (top1 === "IT" && top2 === "STUDY") layoutPatternIndex = 5;
-  else if (top1 === "PLAY" && top2 === "POLITICS") layoutPatternIndex = 6;
-  else if (top1 === "FOOD" && top2 === "KNOWLEDGE") layoutPatternIndex = 7;
-  else if (top1 === "TECH" && top2 === "PLAY") layoutPatternIndex = 8;
-  else if (top1 === "SECRET" && top2 === "FOOD") layoutPatternIndex = 9;
-  else if (top1 === "POLITICS" && top2 === "STUDY") layoutPatternIndex = 10;
-  else if (top1 === "SLEEP" && top2 === "IT") layoutPatternIndex = 11;
-  else if (top1 === "PLAY" && top2 === "KNOWLEDGE") layoutPatternIndex = 12;
-  else if (top1 === "SECRET" && top2 === "KNOWLEDGE") layoutPatternIndex = 13;
-  else if (top1 === "TECH" && top2 === "FOOD") layoutPatternIndex = 14;
-  else if (scores.IT > 5) layoutPatternIndex = 15;
-  else if (scores.POLITICS > 5) layoutPatternIndex = 16;
-  else if (scores.PLAY > 5) layoutPatternIndex = 17;
-  else if (scores.FOOD > 5) layoutPatternIndex = 18;
-  else layoutPatternIndex = 19;
-
-  // 20+パターンの基本定義
+  // 20種類の基本レイアウト
   const patterns = [
     [
       { top: "22%", left: "42%", word: wordMaster.IT },
@@ -551,7 +533,7 @@ function ResultContent() {
     ],
   ];
 
-  const activeLayout = patterns[layoutPatternIndex];
+  const activeLayout = patterns[activePatternIndex] || patterns[0];
 
   // おすすめ本2冊のデータ
   const recommendedBooks = [
@@ -621,7 +603,7 @@ function ResultContent() {
 
       {/* 4つの主要図（2列グリッド） */}
       <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* 左カラム：1. 診断結果カード（解説文付き） ＆ 2. 脳内イメージ（顔画像） */}
+        {/* 左カラム：1. 診断結果カード ＆ 2. 脳内イメージ */}
         <div className="flex flex-col gap-6">
           <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 text-center">
             <span className="text-xs font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full">
@@ -647,22 +629,22 @@ function ResultContent() {
                 className="object-contain pointer-events-none"
               />
               <div className="absolute inset-0 select-none font-black flex items-center justify-center">
-                {/* 1. 【ご要望の演出】巨大「H」モード（頭の画像と同等の超特大サイズで1文字表示） */}
+                {/* 【20%の確率で発動】巨大「H」超特大演出 */}
                 {isBigHMode ? (
-                  <span className="text-fuchsia-600 font-black text-9xl leading-none transform translate-x-3 -translate-y-2 opacity-90 drop-shadow-xl animate-pulse">
+                  <span className="text-fuchsia-600 font-black text-9xl leading-none transform translate-x-2 -translate-y-2 opacity-95 drop-shadow-2xl animate-pulse">
                     H
                   </span>
                 ) : (
-                  /* 2. 通常モード（揺らぎランダムを加えた複数文字配置） */
+                  /* 通常モード：20種類×ランダム位置揺らぎ */
                   activeLayout.map((pos, idx) => {
-                    const offset = randomOffset[idx] || 0;
+                    const offset = randomOffsets[idx] || { x: 0, y: 0 };
                     return (
                       <span
                         key={idx}
                         className={`absolute ${pos.word.color} text-base leading-none transform -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-150`}
                         style={{
-                          top: `calc(${pos.top} + ${offset}px)`,
-                          left: `calc(${pos.left} + ${offset}px)`,
+                          top: `calc(${pos.top} + ${offset.y}px)`,
+                          left: `calc(${pos.left} + ${offset.x}px)`,
                         }}
                       >
                         {pos.word.text}
@@ -712,7 +694,6 @@ function ResultContent() {
               <div className="absolute w-full h-0.5 bg-slate-300"></div>
               <div className="absolute h-full w-0.5 bg-slate-300"></div>
 
-              {/* 上下左右軸ラベル */}
               <span className="absolute top-1.5 text-[10px] font-bold text-slate-500 bg-slate-50 px-1">
                 理論派
               </span>
@@ -739,7 +720,7 @@ function ResultContent() {
         </div>
       </div>
 
-      {/* 4つの図の下：画像付きおすすめ本アフィリエイト枠 */}
+      {/* おすすめ本 */}
       <div className="max-w-5xl w-full mb-6">
         <div className="bg-gradient-to-r from-amber-50/60 via-orange-50/60 to-amber-50/60 rounded-2xl p-6 border border-amber-200/60 shadow-sm">
           <div className="flex items-center gap-2 mb-4 border-b border-amber-200/80 pb-2">
@@ -802,7 +783,7 @@ function ResultContent() {
         </div>
       </div>
 
-      {/* 本の直下：𝕏 (Twitter) シェアボタン */}
+      {/* 𝕏 シェアボタン */}
       <div className="max-w-5xl w-full text-center mb-6">
         <button
           onClick={handleShare}
