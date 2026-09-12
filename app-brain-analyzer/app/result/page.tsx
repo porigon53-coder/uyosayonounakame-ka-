@@ -149,9 +149,7 @@ function ResultContent() {
   });
 
   const sortedKeys = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
-  const selectedKeys = sortedKeys.slice(0, 4);
-  const topWord1 = wordMaster[selectedKeys[0]] || wordMaster.MONEY;
-  const topWord2 = wordMaster[selectedKeys[1]] || wordMaster.KNOWLEDGE;
+  const top4Keys = sortedKeys.slice(0, 4);
 
   const isExtrovert = scores.PLAY + scores.POLITICS > scores.IT + scores.STUDY;
   const isSensing =
@@ -173,8 +171,8 @@ function ResultContent() {
   let descriptionText =
     "特定のジャンルに偏らず、幅広い領域の情報に触れているバランス重視の頭脳です。多角的な視点から物事を捉え、柔軟に思考を切り替えることができるのが強みです。";
 
-  const top1 = selectedKeys[0];
-  const top2 = selectedKeys[1];
+  const top1 = sortedKeys[0];
+  const top2 = sortedKeys[1];
 
   if (top1 === "MONEY" || top2 === "MONEY") {
     titleSuffix = "マネー・資産形成重視脳』";
@@ -211,18 +209,42 @@ function ResultContent() {
   const yDiff = techCount - newsCount;
   const yPos = Math.min(85, Math.max(-85, yDiff * 18));
 
-  // レイアウト設定
+  // --- レイアウト ＆ ランダム文字選出ステート ---
   const [layoutStyle, setLayoutStyle] = useState<number>(0);
   const [isBigH, setIsBigH] = useState<boolean>(false);
   const [showTestMode, setShowTestMode] = useState<boolean>(false);
 
+  // 上位4つからランダム選出された文字ペア
+  const [activeWords, setActiveWords] = useState<{
+    wordA: typeof wordMaster.MONEY;
+    wordB: typeof wordMaster.KNOWLEDGE;
+  }>({
+    wordA: wordMaster.MONEY,
+    wordB: wordMaster.KNOWLEDGE,
+  });
+
   useEffect(() => {
+    // 1. 20%確率で「H」特大モード
     const rollBigH = Math.random() < 0.2 || scores.SECRET > 3;
     setIsBigH(rollBigH);
-    const styleRoll = Math.floor(Math.random() * 7);
+
+    // 2. パターン選出 (0, 1, 2, 3 の4種類に絞り込み)
+    // 0: 円形+中央1文字 / 1: 円形交互 / 2: 上半分円弧+中央文字 / 3: 左右均等分割
+    const styleRoll = Math.floor(Math.random() * 4);
     setLayoutStyle(styleRoll);
+
+    // 3. 上位4文字からランダムに2つの文字（wordA, wordB）を抽選
+    const shuffledKeys = [...top4Keys].sort(() => Math.random() - 0.5);
+    const keyA = shuffledKeys[0] || "MONEY";
+    const keyB = shuffledKeys[1] || "KNOWLEDGE";
+
+    setActiveWords({
+      wordA: wordMaster[keyA] || wordMaster.MONEY,
+      wordB: wordMaster[keyB] || wordMaster.KNOWLEDGE,
+    });
   }, []);
 
+  // 円環状の基準15ポジション（パターン1, 2用）
   const circlePositions = [
     { top: "18%", left: "50%" },
     { top: "20%", left: "62%" },
@@ -239,11 +261,15 @@ function ResultContent() {
     { top: "25%", left: "33%" },
     { top: "20%", left: "40%" },
     { top: "18%", left: "45%" },
-    { top: "38%", left: "50%" },
   ];
 
-  // 単一スタイル描画ヘルパー
-  const renderPatternByStyle = (styleId: number, forceBigH = false) => {
+  // パターン描画関数
+  const renderPatternByStyle = (
+    styleId: number,
+    forceBigH = false,
+    customWordA = activeWords.wordA,
+    customWordB = activeWords.wordB,
+  ) => {
     if (forceBigH) {
       return (
         <span className="text-fuchsia-600 font-black text-9xl leading-none transform translate-x-2 -translate-y-2 opacity-95 drop-shadow-2xl animate-pulse">
@@ -251,38 +277,44 @@ function ResultContent() {
         </span>
       );
     }
+
+    // パターン1: 円形で並ぶ ＋ 真ん中に1文字
     if (styleId === 0) {
       return (
         <>
-          {circlePositions.slice(0, 15).map((pos, idx) => (
+          {circlePositions.map((pos, idx) => (
             <span
               key={idx}
-              className={`absolute ${topWord1.color} text-sm font-bold`}
+              className={`absolute ${customWordA.color} text-sm font-bold`}
               style={{ top: pos.top, left: pos.left }}
             >
-              {topWord1.text}
+              {customWordA.text}
             </span>
           ))}
           <span
-            className={`absolute ${topWord2.color} text-2xl font-black transform -translate-x-1/2 -translate-y-1/2`}
+            className={`absolute ${customWordB.color} text-3xl font-black transform -translate-x-1/2 -translate-y-1/2`}
             style={{ top: "40%", left: "51%" }}
           >
-            {topWord2.text}
+            {customWordB.text}
           </span>
         </>
       );
     }
+
+    // パターン2: 円形で交互に綺麗に並ぶ
     if (styleId === 1) {
-      return circlePositions.slice(0, 15).map((pos, idx) => (
+      return circlePositions.map((pos, idx) => (
         <span
           key={idx}
-          className={`absolute ${idx % 2 === 0 ? topWord1.color : topWord2.color} text-sm font-bold`}
+          className={`absolute ${idx % 2 === 0 ? customWordA.color : customWordB.color} text-sm font-bold`}
           style={{ top: pos.top, left: pos.left }}
         >
-          {idx % 2 === 0 ? topWord1.text : topWord2.text}
+          {idx % 2 === 0 ? customWordA.text : customWordB.text}
         </span>
       ));
     }
+
+    // パターン3: 頭の上半分(円弧) 整列 ＋ 中央文字
     if (styleId === 2) {
       const topArc = [
         { top: "18%", left: "38%" },
@@ -299,117 +331,67 @@ function ResultContent() {
           {topArc.map((pos, idx) => (
             <span
               key={idx}
-              className={`absolute ${topWord1.color} text-sm font-bold`}
+              className={`absolute ${customWordA.color} text-sm font-bold`}
               style={{ top: pos.top, left: pos.left }}
             >
-              {topWord1.text}
+              {customWordA.text}
             </span>
           ))}
           <span
-            className={`absolute ${topWord2.color} text-3xl font-black`}
+            className={`absolute ${customWordB.color} text-4xl font-black`}
             style={{ top: "45%", left: "48%" }}
           >
-            {topWord2.text}
+            {customWordB.text}
           </span>
         </>
       );
     }
+
+    // パターン5（調整版）: 左右均等分割・等間隔レイアウト
     if (styleId === 3) {
-      const bottomArc = [
-        { top: "50%", left: "30%" },
-        { top: "56%", left: "38%" },
-        { top: "60%", left: "48%" },
-        { top: "58%", left: "58%" },
-        { top: "52%", left: "68%" },
-        { top: "45%", left: "75%" },
+      const evenLeftPositions = [
+        { top: "20%", left: "35%" },
+        { top: "28%", left: "32%" },
+        { top: "36%", left: "30%" },
+        { top: "44%", left: "32%" },
+        { top: "52%", left: "36%" },
+        { top: "25%", left: "43%" },
+        { top: "40%", left: "43%" },
+      ];
+      const evenRightPositions = [
+        { top: "20%", left: "65%" },
+        { top: "28%", left: "68%" },
+        { top: "36%", left: "70%" },
+        { top: "44%", left: "68%" },
+        { top: "52%", left: "64%" },
+        { top: "25%", left: "57%" },
+        { top: "40%", left: "57%" },
       ];
       return (
         <>
-          {bottomArc.map((pos, idx) => (
-            <span
-              key={idx}
-              className={`absolute ${topWord1.color} text-sm font-bold`}
-              style={{ top: pos.top, left: pos.left }}
-            >
-              {topWord1.text}
-            </span>
-          ))}
-          <span
-            className={`absolute ${topWord2.color} text-3xl font-black`}
-            style={{ top: "30%", left: "48%" }}
-          >
-            {topWord2.text}
-          </span>
-        </>
-      );
-    }
-    if (styleId === 4) {
-      const leftPositions = [
-        { top: "22%", left: "32%" },
-        { top: "28%", left: "35%" },
-        { top: "35%", left: "30%" },
-        { top: "42%", left: "32%" },
-        { top: "48%", left: "35%" },
-        { top: "25%", left: "42%" },
-        { top: "38%", left: "42%" },
-      ];
-      const rightPositions = [
-        { top: "22%", left: "60%" },
-        { top: "28%", left: "65%" },
-        { top: "35%", left: "70%" },
-        { top: "42%", left: "68%" },
-        { top: "48%", left: "62%" },
-        { top: "25%", left: "52%" },
-        { top: "38%", left: "52%" },
-      ];
-      return (
-        <>
-          {leftPositions.map((pos, idx) => (
+          {evenLeftPositions.map((pos, idx) => (
             <span
               key={`l-${idx}`}
-              className={`absolute ${topWord1.color} text-sm font-bold`}
+              className={`absolute ${customWordA.color} text-sm font-bold`}
               style={{ top: pos.top, left: pos.left }}
             >
-              {topWord1.text}
+              {customWordA.text}
             </span>
           ))}
-          {rightPositions.map((pos, idx) => (
+          {evenRightPositions.map((pos, idx) => (
             <span
               key={`r-${idx}`}
-              className={`absolute ${topWord2.color} text-sm font-bold`}
+              className={`absolute ${customWordB.color} text-sm font-bold`}
               style={{ top: pos.top, left: pos.left }}
             >
-              {topWord2.text}
+              {customWordB.text}
             </span>
           ))}
         </>
       );
     }
-    if (styleId === 5) {
-      return (
-        <>
-          <span
-            className={`absolute ${topWord1.color} text-6xl font-black transform -translate-x-1/2 -translate-y-1/2`}
-            style={{ top: "40%", left: "38%" }}
-          >
-            {topWord1.text}
-          </span>
-          <span
-            className={`absolute ${topWord2.color} text-6xl font-black transform -translate-x-1/2 -translate-y-1/2`}
-            style={{ top: "40%", left: "64%" }}
-          >
-            {topWord2.text}
-          </span>
-        </>
-      );
-    }
-    return (
-      <span
-        className={`${topWord1.color} font-black text-8xl leading-none transform translate-x-1 -translate-y-2 opacity-90 drop-shadow-xl`}
-      >
-        {topWord1.text}
-      </span>
-    );
+
+    return null;
   };
 
   const recommendedBooks = [
@@ -443,13 +425,10 @@ function ResultContent() {
   };
 
   const styleNames = [
-    "円形輪郭 ＋ 中央1文字",
-    "円形交互配置",
-    "上半分円弧 ＋ 中央文字",
-    "下半分円弧 ＋ 上部文字",
-    "左右2分割配置",
-    "特大2文字対比",
-    "全体1文字巨大表示",
+    "パターン1: 円形輪郭 ＋ 中央1文字",
+    "パターン2: 円形交互配置",
+    "パターン3: 上半分円弧 ＋ 中央文字",
+    "パターン5: 左右均等分割・等間隔配置",
   ];
 
   return (
@@ -583,20 +562,20 @@ function ResultContent() {
           className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs px-4 py-2 rounded-xl border border-indigo-200 transition cursor-pointer"
         >
           {showTestMode
-            ? "▲ 全パターンプレビューを閉じる"
-            : "⚙️ 【テスト機能】全脳内イメージパターンを全種類表示する"}
+            ? "▲ プレビュー一覧を閉じる"
+            : "⚙️ 【テスト機能】洗練された全パターンを表示する"}
         </button>
 
         {showTestMode && (
           <div className="mt-4 bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm">
             <h4 className="text-sm font-bold text-slate-900 mb-4">
-              🧪 全脳内パターン一覧（テスト用）
+              🧪 洗練された全脳内パターン一覧
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {/* 超特大「H」 */}
               <div className="flex flex-col items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <span className="text-[11px] font-bold text-indigo-600 mb-2">
-                  🔥 超特大「H」演出（20%確率）
+                  🔥 超特大「H」演出 (20%)
                 </span>
                 <div className="relative w-40 h-40 flex items-center justify-center border rounded-lg bg-white overflow-hidden">
                   <Image
@@ -611,14 +590,14 @@ function ResultContent() {
                 </div>
               </div>
 
-              {/* 7パターンの幾何学スタイル */}
+              {/* 4つの厳選パターン */}
               {styleNames.map((name, idx) => (
                 <div
                   key={idx}
                   className="flex flex-col items-center bg-slate-50 p-3 rounded-xl border border-slate-100"
                 >
                   <span className="text-[11px] font-bold text-slate-700 mb-2">
-                    パターン{idx + 1}: {name}
+                    {name}
                   </span>
                   <div className="relative w-40 h-40 flex items-center justify-center border rounded-lg bg-white overflow-hidden">
                     <Image
