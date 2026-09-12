@@ -209,12 +209,11 @@ function ResultContent() {
   const yDiff = techCount - newsCount;
   const yPos = Math.min(85, Math.max(-85, yDiff * 18));
 
-  // --- レイアウト ＆ ランダム文字選出ステート ---
+  // --- レイアウト ＆ 解答連動確率計算 ---
   const [layoutStyle, setLayoutStyle] = useState<number>(0);
   const [isBigH, setIsBigH] = useState<boolean>(false);
   const [showTestMode, setShowTestMode] = useState<boolean>(false);
 
-  // 上位4つからランダム選出された文字ペア
   const [activeWords, setActiveWords] = useState<{
     wordA: typeof wordMaster.MONEY;
     wordB: typeof wordMaster.KNOWLEDGE;
@@ -224,16 +223,42 @@ function ResultContent() {
   });
 
   useEffect(() => {
-    // 1. 20%確率で「H」特大モード
-    const rollBigH = Math.random() < 0.2 || scores.SECRET > 3;
+    // 1. 巨大「H」モード（5%確率 OR SECRET高スコア）
+    const rollBigH = Math.random() < 0.05 || scores.SECRET > 3;
     setIsBigH(rollBigH);
 
-    // 2. パターン選出 (0, 1, 2, 3 の4種類に絞り込み)
-    // 0: 円形+中央1文字 / 1: 円形交互 / 2: 上半分円弧+中央文字 / 3: 左右均等分割
-    const styleRoll = Math.floor(Math.random() * 4);
-    setLayoutStyle(styleRoll);
+    // 2. 解答スコアに応じた基本重み（70%分）＋ 30%ランダム性の算出
+    const baseP1 = 5 + (scores.MONEY + scores.SECRET) * 2;
+    const baseP2 = 20 + (scores.FOOD + scores.SLEEP) * 3;
+    const baseP3 = 25 + (scores.IT + scores.TECH + scores.STUDY) * 3;
+    const baseP4 = 25 + (scores.POLITICS + scores.KNOWLEDGE) * 3;
+    const baseP5 = 25 + scores.PLAY * 3;
 
-    // 3. 上位4文字からランダムに2つの文字（wordA, wordB）を抽選
+    // 30%のランダム揺らぎ（0〜15の乱数を各パターンに加算）
+    const weights = [
+      { id: 0, weight: baseP1 * 0.7 + Math.random() * 15 },
+      { id: 1, weight: baseP2 * 0.7 + Math.random() * 15 },
+      { id: 2, weight: baseP3 * 0.7 + Math.random() * 15 },
+      { id: 3, weight: baseP4 * 0.7 + Math.random() * 15 },
+      { id: 4, weight: baseP5 * 0.7 + Math.random() * 15 },
+    ];
+
+    // 重みの合計から確率に基づいて1つのパターンを選定
+    const totalWeight = weights.reduce((acc, cur) => acc + cur.weight, 0);
+    let randomVal = Math.random() * totalWeight;
+    let selectedId = 0;
+
+    for (const item of weights) {
+      if (randomVal < item.weight) {
+        selectedId = item.id;
+        break;
+      }
+      randomVal -= item.weight;
+    }
+
+    setLayoutStyle(selectedId);
+
+    // 上位4文字からランダムペア抽選
     const shuffledKeys = [...top4Keys].sort(() => Math.random() - 0.5);
     const keyA = shuffledKeys[0] || "MONEY";
     const keyB = shuffledKeys[1] || "KNOWLEDGE";
@@ -244,7 +269,7 @@ function ResultContent() {
     });
   }, []);
 
-  // 円環状の基準15ポジション（パターン1, 2用）
+  // 基準円環ポジション
   const circlePositions = [
     { top: "18%", left: "50%" },
     { top: "20%", left: "62%" },
@@ -263,7 +288,7 @@ function ResultContent() {
     { top: "18%", left: "45%" },
   ];
 
-  // パターン描画関数
+  // パターン描画
   const renderPatternByStyle = (
     styleId: number,
     forceBigH = false,
@@ -301,7 +326,7 @@ function ResultContent() {
       );
     }
 
-    // パターン2: 円形で交互に綺麗に並ぶ
+    // パターン2: 円形で交互配置
     if (styleId === 1) {
       return circlePositions.map((pos, idx) => (
         <span
@@ -314,7 +339,7 @@ function ResultContent() {
       ));
     }
 
-    // パターン3: 頭の上半分(円弧) 整列 ＋ 中央文字
+    // パターン3: 上半分円弧 ＋ 中央文字
     if (styleId === 2) {
       const topArc = [
         { top: "18%", left: "38%" },
@@ -347,7 +372,7 @@ function ResultContent() {
       );
     }
 
-    // パターン5（調整版）: 左右均等分割・等間隔レイアウト
+    // パターン4: 左右均等分割・等間隔配置
     if (styleId === 3) {
       const evenLeftPositions = [
         { top: "20%", left: "35%" },
@@ -391,6 +416,35 @@ function ResultContent() {
       );
     }
 
+    // パターン5: 全満たし均等配置
+    if (styleId === 4) {
+      const fullGrid = [
+        { top: "20%", left: "42%" },
+        { top: "20%", left: "58%" },
+        { top: "28%", left: "35%" },
+        { top: "28%", left: "50%" },
+        { top: "28%", left: "65%" },
+        { top: "36%", left: "30%" },
+        { top: "36%", left: "42%" },
+        { top: "36%", left: "58%" },
+        { top: "36%", left: "70%" },
+        { top: "44%", left: "35%" },
+        { top: "44%", left: "50%" },
+        { top: "44%", left: "65%" },
+        { top: "52%", left: "42%" },
+        { top: "52%", left: "58%" },
+      ];
+      return fullGrid.map((pos, idx) => (
+        <span
+          key={idx}
+          className={`absolute ${idx % 2 === 0 ? customWordA.color : customWordB.color} text-sm font-bold`}
+          style={{ top: pos.top, left: pos.left }}
+        >
+          {idx % 2 === 0 ? customWordA.text : customWordB.text}
+        </span>
+      ));
+    }
+
     return null;
   };
 
@@ -428,7 +482,8 @@ function ResultContent() {
     "パターン1: 円形輪郭 ＋ 中央1文字",
     "パターン2: 円形交互配置",
     "パターン3: 上半分円弧 ＋ 中央文字",
-    "パターン5: 左右均等分割・等間隔配置",
+    "パターン4: 左右均等分割配置",
+    "パターン5: 全満たし均等配置",
   ];
 
   return (
@@ -563,7 +618,7 @@ function ResultContent() {
         >
           {showTestMode
             ? "▲ プレビュー一覧を閉じる"
-            : "⚙️ 【テスト機能】洗練された全パターンを表示する"}
+            : "⚙️ 【テスト機能】全5パターン ＋ 巨大Hモードを表示する"}
         </button>
 
         {showTestMode && (
@@ -571,13 +626,13 @@ function ResultContent() {
             <h4 className="text-sm font-bold text-slate-900 mb-4">
               🧪 洗練された全脳内パターン一覧
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
               {/* 超特大「H」 */}
               <div className="flex flex-col items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <span className="text-[11px] font-bold text-indigo-600 mb-2">
-                  🔥 超特大「H」演出 (20%)
+                  🔥 巨大「H」(5%)
                 </span>
-                <div className="relative w-40 h-40 flex items-center justify-center border rounded-lg bg-white overflow-hidden">
+                <div className="relative w-36 h-36 flex items-center justify-center border rounded-lg bg-white overflow-hidden">
                   <Image
                     src="/head.png"
                     alt="頭"
@@ -590,7 +645,7 @@ function ResultContent() {
                 </div>
               </div>
 
-              {/* 4つの厳選パターン */}
+              {/* 5つの厳選パターン */}
               {styleNames.map((name, idx) => (
                 <div
                   key={idx}
@@ -599,7 +654,7 @@ function ResultContent() {
                   <span className="text-[11px] font-bold text-slate-700 mb-2">
                     {name}
                   </span>
-                  <div className="relative w-40 h-40 flex items-center justify-center border rounded-lg bg-white overflow-hidden">
+                  <div className="relative w-36 h-36 flex items-center justify-center border rounded-lg bg-white overflow-hidden">
                     <Image
                       src="/head.png"
                       alt="頭"
